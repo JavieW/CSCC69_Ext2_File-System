@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
     printf("\tfree inodes: %d\n", gd->bg_free_inodes_count);
     printf("\tused_dirs: %d\n", gd->bg_used_dirs_count);
 
-    // print bitmap
+    // task1, print bitmap
     int i,j;
     printf("Block bitmap:");
     for (i=0; i<sb->s_blocks_count/8; i++) {
@@ -55,25 +55,31 @@ int main(int argc, char **argv) {
     }
     printf("\n\n");
 
-    // print inode
+    // task2, print inode
     struct ext2_inode *inodes = (struct ext2_inode *)(disk+gd->bg_inode_table*EXT2_BLOCK_SIZE);
-    //struct ext2_inode inode;
     char mode;
     printf("Inodes:\n");
     for(i = 0; i < sb->s_inodes_count; i++) {
         if (((*(disk+gd->bg_inode_bitmap*EXT2_BLOCK_SIZE+i/8)>>i%8)&1 && i>=EXT2_GOOD_OLD_FIRST_INO) || (i==EXT2_ROOT_INO-1)) {
-            if (inodes[i].i_mode == EXT2_S_IFDIR)
-                mode = 'd';
-            else if (inodes[i].i_mode == EXT2_S_IFREG)
-                mode = 'f';
-            else if (inodes[i].i_mode == EXT2_S_IFLNK)
+            // if this inode doesn't reserve blocks
+            if (inodes[i].i_block[0] == 0)
                 continue;
+
+            // o/w, print out the following info about the inode 
+            if (inodes[i].i_mode & EXT2_S_IFDIR)
+                mode = 'd';
+            else if (inodes[i].i_mode & EXT2_S_IFREG)
+                mode = 'f';
+            else if (inodes[i].i_mode & EXT2_S_IFLNK)
+                mode = 'l';
             printf("[%d] type: %c size: %d links: %d blocks: %d\n", i+1, mode, inodes[i].i_size, inodes[i].i_links_count, inodes[i].i_blocks);
-            printf("Blocks: %d\n", inodes[i].i_block[0]);
+            printf("[%d] Blocks: %d\n", i+1, inodes[i].i_block[0]);
         }
     }
     printf("\n");
 
+    // task3, print directory enties
+    
 
     return 0;
 }
