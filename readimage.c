@@ -59,13 +59,16 @@ int main(int argc, char **argv) {
     struct ext2_inode *inodes = (struct ext2_inode *)(disk+gd->bg_inode_table*EXT2_BLOCK_SIZE);
     char mode;
     printf("Inodes:\n");
-    for(i = 0; i < sb->s_inodes_count; i++) {
-        if (((*(disk+gd->bg_inode_bitmap*EXT2_BLOCK_SIZE+i/8)>>i%8)&1 && i>=EXT2_GOOD_OLD_FIRST_INO) || (i==EXT2_ROOT_INO-1)) {
-            // if this inode doesn't reserve blocks
+    for(i = 0; i < sb->s_inodes_count; i++) 
+    {
+        // print root inode and used unreserved inodes
+        if (((*(disk+gd->bg_inode_bitmap*EXT2_BLOCK_SIZE+i/8)>>i%8)&1 && i>=EXT2_GOOD_OLD_FIRST_INO) || (i==EXT2_ROOT_INO-1))
+        {
+            // skip the inodes that don't reserve blocks
             if (inodes[i].i_block[0] == 0)
                 continue;
 
-            // o/w, print out the following info about the inode 
+            // print out the following info about the inode 
             if (inodes[i].i_mode & EXT2_S_IFDIR)
                 mode = 'd';
             else if (inodes[i].i_mode & EXT2_S_IFREG)
@@ -79,7 +82,25 @@ int main(int argc, char **argv) {
     printf("\n");
 
     // task3, print directory enties
-    
+    printf("Directory Blocks:\n");
+    for(i = 0; i < sb->s_inodes_count; i++) 
+    {
+        // print root inode and used unreserved inodes
+        if (((*(disk+gd->bg_inode_bitmap*EXT2_BLOCK_SIZE+i/8)>>i%8)&1 && i>=EXT2_GOOD_OLD_FIRST_INO) || (i==EXT2_ROOT_INO-1))
+        {
+            // skip the inodes that not belong to a directory
+            if (!(inodes[i].i_mode & EXT2_S_IFDIR))
+                continue;
+            
+            printf("\tDIR BLOCK NUM: %d (for inode %d)\n", inodes[i].i_block[0], i+1);
+            struct ext2_dir_entry_2 *dir = (struct ext2_dir_entry_2 *)(disk+inodes[i].i_block[0]*EXT2_BLOCK_SIZE);
+            // while not hit the end og the block
+            while ((int)dir < (int)(disk+(inodes[i].i_block[0]+1)*EXT2_BLOCK_SIZE)) {
+                printf("Inode: %d rec_len: %d name_len: %d type= d name=%s\n", dir->inode, dir->rec_len, dir->name_len, dir->name);
+                dir = (void *) dir + dir->rec_len;
+            }
+        }
+    }
 
     return 0;
 }
