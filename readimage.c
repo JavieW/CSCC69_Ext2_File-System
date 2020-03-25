@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
 
     // task2, print inode
     struct ext2_inode *inodes = (struct ext2_inode *)(disk+gd->bg_inode_table*EXT2_BLOCK_SIZE);
-    char mode;
+    char mode='\0';
     printf("Inodes:\n");
     for(i = 0; i < sb->s_inodes_count; i++) 
     {
@@ -82,6 +82,7 @@ int main(int argc, char **argv) {
     printf("\n");
 
     // task3, print directory enties
+    char type='\0';
     printf("Directory Blocks:\n");
     for(i = 0; i < sb->s_inodes_count; i++) 
     {
@@ -96,6 +97,14 @@ int main(int argc, char **argv) {
             struct ext2_dir_entry_2 *dir = (struct ext2_dir_entry_2 *)(disk+inodes[i].i_block[0]*EXT2_BLOCK_SIZE);
             // while not hit the end og the block
             while ((int)dir < (int)(disk+(inodes[i].i_block[0]+1)*EXT2_BLOCK_SIZE)) {
+                if (dir->file_type == EXT2_FT_UNKNOWN)
+                    type = 'u';
+                else if (dir->file_type == EXT2_FT_REG_FILE)
+                    type = 'f';
+                else if (dir->file_type == EXT2_FT_DIR)
+                    type = 'd';
+                else if (dir->file_type == EXT2_FT_SYMLINK)
+                    type = 'l';
                 printf("Inode: %d rec_len: %d name_len: %d type= d name=%s\n", dir->inode, dir->rec_len, dir->name_len, dir->name);
                 dir = (void *) dir + dir->rec_len;
             }
