@@ -40,8 +40,8 @@ int main(int argc, char **argv) {
 
     // task1, print bitmap
     int i,j;
-    char *block_bitmap = BLOCK(disk, gd->bg_block_bitmap);
-    char *inode_bitmap = BLOCK(disk, gd->bg_inode_bitmap);
+    char unsigned *block_bitmap = BLOCK(disk, gd->bg_block_bitmap);
+    char unsigned *inode_bitmap = BLOCK(disk, gd->bg_inode_bitmap);
     printf("Block bitmap:");
     for (i=0; i<sb->s_blocks_count/8; i++) {
         printf(" ");
@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
     printf("\n\n");
 
     // task2, print inode
-    struct ext2_inode *inodes = BLOCK(disk, gd->bg_inode_table);
+    struct ext2_inode *inodes = (struct ext2_inode *) BLOCK(disk, gd->bg_inode_table);
     char mode='\0';
     printf("Inodes:\n");
     for(i = 0; i < sb->s_inodes_count; i++) 
@@ -98,7 +98,7 @@ int main(int argc, char **argv) {
                 continue;
             
             printf("\tDIR BLOCK NUM: %d (for inode %d)\n", inodes[i].i_block[0], i+1);
-            dir_entries = BLOCK(disk, inodes[i].i_block[0]);
+            dir_entries = (struct ext2_dir_entry_2 *)BLOCK(disk, inodes[i].i_block[0]);
             // while not hit the end og the block
             while ((int)dir_entries < (int)(disk+(inodes[i].i_block[0]+1)*EXT2_BLOCK_SIZE)) {
                 if (dir_entries->file_type == EXT2_FT_UNKNOWN)
