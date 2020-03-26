@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include "ext2.h"
+#include "utilities.h"
 
 unsigned char *disk;
 
@@ -24,11 +25,11 @@ int main(int argc, char **argv) {
 	exit(1);
     }
 
-    struct ext2_super_block *sb = (struct ext2_super_block *)(disk + EXT2_BLOCK_SIZE);
+    struct ext2_super_block *sb = SUPER_BLOCK(disk);
     printf("Inodes: %d\n", sb->s_inodes_count);
     printf("Blocks: %d\n", sb->s_blocks_count);
 
-    struct ext2_group_desc *gd = (struct ext2_group_desc *)(disk+2*EXT2_BLOCK_SIZE);
+    struct ext2_group_desc *gd = GROUP_DESCRIPTOR(disk);
     printf("Block group:\n");
     printf("\tblock bitmap: %d\n", gd->bg_block_bitmap);
     printf("\tinode bitmap: %d\n", gd->bg_inode_bitmap);
@@ -39,30 +40,32 @@ int main(int argc, char **argv) {
 
     // task1, print bitmap
     int i,j;
+    char *block_bitmap = BLOCK(disk, gd->bg_block_bitmap);
+    char *inode_bitmap = BLOCK(disk, gd->bg_inode_bitmap);
     printf("Block bitmap:");
     for (i=0; i<sb->s_blocks_count/8; i++) {
         printf(" ");
         for (j=0; j<8; j++) {
-            printf("%d", ((*(disk+gd->bg_block_bitmap*EXT2_BLOCK_SIZE+i)>>j)&1));
+            printf("%d", ((block_bitmap[i]>>j)&1));
         }
     }
     printf("\nInode bitmap:");
     for (i=0; i<sb->s_inodes_count/8; i++) {
         printf(" ");
         for (j=0; j<8; j++) {
-            printf("%d", ((*(disk+gd->bg_inode_bitmap*EXT2_BLOCK_SIZE+i)>>j)&1));
+            printf("%d", ((inode_bitmap[i]>>j)&1));
         }
     }
     printf("\n\n");
 
     // task2, print inode
-    struct ext2_inode *inodes = (struct ext2_inode *)(disk+gd->bg_inode_table*EXT2_BLOCK_SIZE);
+    struct ext2_inode *inodes = BLOCK(disk, gd->bg_inode_table);
     char mode='\0';
     printf("Inodes:\n");
     for(i = 0; i < sb->s_inodes_count; i++) 
     {
         // print root inode and used unreserved inodes
-        if (((*(disk+gd->bg_inode_bitmap*EXT2_BLOCK_SIZE+i/8)>>i%8)&1 && i>=EXT2_GOOD_OLD_FIRST_INO) || (i==EXT2_ROOT_INO-1))
+        if (((inode_bitmap[i/8]>>i%8)&1 && i>=EXT2_GOOD_OLD_FIRST_INO) || (i==EXT2_ROOT_INO-1))
         {
             // skip the inodes that don't reserve blocks
             if (inodes[i].i_block[0] == 0)
@@ -83,30 +86,31 @@ int main(int argc, char **argv) {
 
     // task3, print directory enties
     char type='\0';
+    struct ext2_dir_entry_2 *dir_entries;
     printf("Directory Blocks:\n");
     for(i = 0; i < sb->s_inodes_count; i++) 
     {
         // print root inode and used unreserved inodes
-        if (((*(disk+gd->bg_inode_bitmap*EXT2_BLOCK_SIZE+i/8)>>i%8)&1 && i>=EXT2_GOOD_OLD_FIRST_INO) || (i==EXT2_ROOT_INO-1))
+        if ((((inode_bitmap[i/8]>>i%8)&1>>i%8)&1 && i>=EXT2_GOOD_OLD_FIRST_INO) || (i==EXT2_ROOT_INO-1))
         {
             // skip the inodes that not belong to a directory
             if (!(inodes[i].i_mode & EXT2_S_IFDIR))
                 continue;
             
             printf("\tDIR BLOCK NUM: %d (for inode %d)\n", inodes[i].i_block[0], i+1);
-            struct ext2_dir_entry_2 *dir = (struct ext2_dir_entry_2 *)(disk+inodes[i].i_block[0]*EXT2_BLOCK_SIZE);
+            dir_entries = BLOCK(disk, inodes[i].i_block[0]);
             // while not hit the end og the block
-            while ((int)dir < (int)(disk+(inodes[i].i_block[0]+1)*EXT2_BLOCK_SIZE)) {
-                if (dir->file_type == EXT2_FT_UNKNOWN)
+            while ((int)dir_entries < (int)(disk+(inodes[i].i_block[0]+1)*EXT2_BLOCK_SIZE)) {
+                if (dir_entries->file_type == EXT2_FT_UNKNOWN)
                     type = 'u';
-                else if (dir->file_type == EXT2_FT_REG_FILE)
+                else if (dir_entries->file_type == EXT2_FT_REG_FILE)
                     type = 'f';
-                else if (dir->file_type == EXT2_FT_DIR)
+                else if (dir_entries->file_type == EXT2_FT_DIR)
                     type = 'd';
-                else if (dir->file_type == EXT2_FT_SYMLINK)
+                else if (dir_entries->file_type == EXT2_FT_SYMLINK)
                     type = 'l';
-                printf("Inode: %d rec_len: %d name_len: %d type= d name=%s\n", dir->inode, dir->rec_len, dir->name_len, dir->name);
-                dir = (void *) dir + dir->rec_len;
+                printf("Inode: %d rec_len: %d name_len: %d type= d name=%s\n", dir_entries->inode, dir_entries->rec_len, dir_entries->name_len, dir_entries->name);
+                dir_entries = (void *) dir_entries + dir_entries->rec_len;
             }
         }
     }
