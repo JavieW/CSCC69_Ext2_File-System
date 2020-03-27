@@ -25,11 +25,11 @@ int main(int argc, char **argv) {
 	exit(1);
     }
 
-    struct ext2_super_block *sb = SUPER_BLOCK(disk);
+    struct ext2_super_block *sb = getSuperblock();
     printf("Inodes: %d\n", sb->s_inodes_count);
     printf("Blocks: %d\n", sb->s_blocks_count);
 
-    struct ext2_group_desc *gd = GROUP_DESCRIPTOR(disk);
+    struct ext2_group_desc *gd = getGroupDesc();
     printf("Block group:\n");
     printf("\tblock bitmap: %d\n", gd->bg_block_bitmap);
     printf("\tinode bitmap: %d\n", gd->bg_inode_bitmap);
@@ -40,8 +40,8 @@ int main(int argc, char **argv) {
 
     // task1, print bitmap
     int i,j;
-    char unsigned *block_bitmap = BLOCK(disk, gd->bg_block_bitmap);
-    char unsigned *inode_bitmap = BLOCK(disk, gd->bg_inode_bitmap);
+    char unsigned *block_bitmap = getBlockBitmap();
+    char unsigned *inode_bitmap = getInodeBitmap();
     printf("Block bitmap:");
     for (i=0; i<sb->s_blocks_count/8; i++) {
         printf(" ");
@@ -59,27 +59,27 @@ int main(int argc, char **argv) {
     printf("\n\n");
 
     // task2, print inode
-    struct ext2_inode *inodes = (struct ext2_inode *) BLOCK(disk, gd->bg_inode_table);
+    struct ext2_inode *inodeTable = getInodeTable();
     char mode='\0';
     printf("Inodes:\n");
     for(i = 0; i < sb->s_inodes_count; i++) 
     {
         // print root inode and used unreserved inodes
-        if (((inode_bitmap[i/8]>>i%8)&1 && i>=EXT2_GOOD_OLD_FIRST_INO) || (i==EXT2_ROOT_INO-1))
+        if ((getBit(inode_bitmap, i)==1 && i>=EXT2_GOOD_OLD_FIRST_INO) || (i==EXT2_ROOT_INO-1))
         {
             // skip the inodes that don't reserve blocks
-            if (inodes[i].i_block[0] == 0)
+            if (inodeTable[i].i_block[0] == 0)
                 continue;
 
             // print out the following info about the inode 
-            if (inodes[i].i_mode & EXT2_S_IFDIR)
+            if (inodeTable[i].i_mode & EXT2_S_IFDIR)
                 mode = 'd';
-            else if (inodes[i].i_mode & EXT2_S_IFREG)
+            else if (inodeTable[i].i_mode & EXT2_S_IFREG)
                 mode = 'f';
-            else if (inodes[i].i_mode & EXT2_S_IFLNK)
+            else if (inodeTable[i].i_mode & EXT2_S_IFLNK)
                 mode = 'l';
-            printf("[%d] type: %c size: %d links: %d blocks: %d\n", i+1, mode, inodes[i].i_size, inodes[i].i_links_count, inodes[i].i_blocks);
-            printf("[%d] Blocks: %d\n", i+1, inodes[i].i_block[0]);
+            printf("[%d] type: %c size: %d links: %d blocks: %d\n", i+1, mode, inodeTable[i].i_size, inodeTable[i].i_links_count, inodeTable[i].i_blocks);
+            printf("[%d] Blocks: %d\n", i+1, inodeTable[i].i_block[0]);
         }
     }
     printf("\n");
@@ -91,16 +91,16 @@ int main(int argc, char **argv) {
     for(i = 0; i < sb->s_inodes_count; i++) 
     {
         // print root inode and used unreserved inodes
-        if ((((inode_bitmap[i/8]>>i%8)&1>>i%8)&1 && i>=EXT2_GOOD_OLD_FIRST_INO) || (i==EXT2_ROOT_INO-1))
+        if ((getBit(inode_bitmap, i)==1 && i>=EXT2_GOOD_OLD_FIRST_INO) || (i==EXT2_ROOT_INO-1))
         {
             // skip the inodes that not belong to a directory
-            if (!(inodes[i].i_mode & EXT2_S_IFDIR))
+            if (!(inodeTable[i].i_mode & EXT2_S_IFDIR))
                 continue;
             
-            printf("\tDIR BLOCK NUM: %d (for inode %d)\n", inodes[i].i_block[0], i+1);
-            dir_entries = (struct ext2_dir_entry_2 *)BLOCK(disk, inodes[i].i_block[0]);
+            printf("\tDIR BLOCK NUM: %d (for inode %d)\n", inodeTable[i].i_block[0], i+1);
+            dir_entries = (struct ext2_dir_entry_2 *)getBlock(inodeTable[i].i_block[0]);
             // while not hit the end og the block
-            while ((int)dir_entries < (int)(disk+(inodes[i].i_block[0]+1)*EXT2_BLOCK_SIZE)) {
+            while ((int)dir_entries < (int)(disk+(inodeTable[i].i_block[0]+1)*EXT2_BLOCK_SIZE)) {
                 if (dir_entries->file_type == EXT2_FT_UNKNOWN)
                     type = 'u';
                 else if (dir_entries->file_type == EXT2_FT_REG_FILE)
