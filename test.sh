@@ -36,3 +36,6 @@ echo "-----test non-exist path, this should fail: <<<./ext2_ls twolevel.img -a /
 
 echo "-----test no input image file, this should fail: <<<./ext2_ls twolevel.img>>>-----"
 ./ext2_ls twolevel.img
+
+echo "-----test print a file name, this should work but fail: <<<./ext2_ls onedirectory.img /level1/bfilee.s>>>-----"
+./ext2_ls onedirectory.img /level1/bfilee.s
