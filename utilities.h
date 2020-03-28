@@ -26,10 +26,11 @@ int getBit(char unsigned * , int);
 
 struct ext2_inode *getInodeTable(void);
 
-struct ext2_inode *getInode(int);
-
-struct ext2_inode *getInodeFromPath(char *);
-
 char unsigned *getBlock(int);
 
+// ls
+int getInodeFromPath(char *);
 
+int searchFileInDir(struct ext2_inode *, char *);
+
+void getFileNameFromPath(char *, char *);
