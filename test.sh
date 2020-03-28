@@ -10,10 +10,10 @@ echo "-----test root with flag: <<<./ext2_ls twolevel.img -a />>>-----"
 echo "-----test afile: <<<./ext2_ls twolevel.img  /afile>>>-----"
 ./ext2_ls twolevel.img /afile
 
-echo "-----test afial, <<<flag does't metter: ./ext2_ls twolevel.img -a /afile>>>-----"
+echo "-----test afile, <<<flag does't metter: ./ext2_ls twolevel.img -a /afile>>>-----"
 ./ext2_ls twolevel.img -a /afile
 
-echo "-----test afial, this should fail: <<<./ext2_ls twolevel.img -a /afile/>>>-----"
+echo "-----test afile, this should fail: <<<./ext2_ls twolevel.img -a /afile/>>>-----"
 ./ext2_ls twolevel.img -a /afile/
 
 echo "-----test level1: <<<./ext2_ls twolevel.img  /level1>>>-----"
@@ -33,3 +33,6 @@ echo "-----test bfile, this should fail: <<<./ext2_ls twolevel.img -a /level1/le
 
 echo "-----test non-exist path, this should fail: <<<./ext2_ls twolevel.img -a /level1/level2/cfile>>>-----"
 ./ext2_ls twolevel.img -a /level1/level2/cfile
+
+echo "-----test no input image file, this should fail: <<<./ext2_ls twolevel.img>>>-----"
+./ext2_ls twolevel.img
