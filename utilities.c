@@ -54,21 +54,30 @@ int searchFileInDir(struct ext2_inode *cur_inode, char *fileName) {
 
     // first argument must be directory type
     assert(cur_inode->i_mode & EXT2_S_IFDIR);
-    dir_entry = (struct ext2_dir_entry_2 *)getBlock(cur_inode->i_block[0]);
 
-    total_rec_len = 0;
-    while (total_rec_len < cur_inode->i_size) {
-        if(strcmp(dir_entry->name, fileName)==0) {
-            return dir_entry->inode;
+    // for each block
+    for (int i=0; i<15; i++) {
+        if (cur_inode->i_block[i] == 0) {
+            break;
+        } else {
+            dir_entry = (struct ext2_dir_entry_2 *)getBlock(cur_inode->i_block[i]);
         }
-        total_rec_len = total_rec_len + dir_entry->rec_len;
-        dir_entry = (void *) dir_entry + dir_entry->rec_len;
+
+        // for each dir entry in the block
+        total_rec_len = 0;
+        while (total_rec_len < EXT2_BLOCK_SIZE) {
+            if(strcmp(dir_entry->name, fileName)==0) {
+                return dir_entry->inode;
+            }
+            total_rec_len = total_rec_len + dir_entry->rec_len;
+            dir_entry = (void *) dir_entry + dir_entry->rec_len;
+        }
     }
     return 0;
 }
 
 /*
- * return: inodeNum of the path, NULL if path is not found or invalid
+ * return: inodeNum of the path, 0 if path is not found or invalid
  */
 int getInodeFromPath(char *path) {
     struct ext2_inode *inodeTable = getInodeTable();
@@ -121,4 +130,15 @@ void getFileNameFromPath(char *fileName, char *path) {
         strcpy(fileName, curr);
         curr = strtok(NULL, "/");
     }
+}
+
+/*
+ * modify input path
+ */
+void getParentDirPath(char *path) {
+    int len = strlen(path);
+    if (path[len-1]=='/')
+        path[len-1] = '\0';
+    char *target = strrchr(path, '/');
+    *(target+1) = '\0';
 }

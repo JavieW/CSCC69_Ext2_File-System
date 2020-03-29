@@ -109,7 +109,7 @@ int main(int argc, char **argv) {
                     type = 'd';
                 else if (dir_entries->file_type == EXT2_FT_SYMLINK)
                     type = 'l';
-                printf("Inode: %d rec_len: %d name_len: %d type= d name=%s\n", dir_entries->inode, dir_entries->rec_len, dir_entries->name_len, dir_entries->name);
+                printf("Inode: %d rec_len: %d name_len: %d type= %c name=%s\n", dir_entries->inode, dir_entries->rec_len, dir_entries->name_len, type, dir_entries->name);
                 dir_entries = (void *) dir_entries + dir_entries->rec_len;
             }
         }

@@ -11,7 +11,6 @@
 #include "utilities.h"
 
 unsigned char *disk;
-struct ext2_inode *inodeTable;
 
 int main(int argc, char **argv) {
     char path[EXT2_NAME_LEN];
@@ -19,6 +18,7 @@ int main(int argc, char **argv) {
     char fileName[EXT2_NAME_LEN];
     int flagged = FALSE;
     struct ext2_inode inode;
+    struct ext2_inode *inodeTable;
     struct ext2_dir_entry_2 *dir_entry = NULL;
     int total_rec_len;
 
@@ -59,15 +59,22 @@ int main(int argc, char **argv) {
 
     // print all file nemes in directory data block
     if (inode.i_mode & EXT2_S_IFDIR) {
-        dir_entry = (struct ext2_dir_entry_2 *)getBlock(inode.i_block[0]);
-        
-        total_rec_len = 0;
-        while(total_rec_len < inode.i_size) {
-            if (dir_entry->name[0]!='.' || flagged) {
-                printf("%s\n", dir_entry->name);
+        for (int i=0; i<15; i++) {
+            if (inode.i_block[i] == 0){
+                break;
+            } else {
+                dir_entry = (struct ext2_dir_entry_2 *)getBlock(inode.i_block[i]);
             }
-            total_rec_len = total_rec_len + dir_entry->rec_len;
-            dir_entry = (void*)dir_entry + dir_entry->rec_len;
+            
+            // for each dir entry in the block
+            total_rec_len = 0;
+            while (total_rec_len < EXT2_BLOCK_SIZE) {
+                if (dir_entry->name[0]!='.' || flagged) {
+                    printf("%s\n", dir_entry->name);
+                }
+                total_rec_len = total_rec_len + dir_entry->rec_len;
+                dir_entry = (void *) dir_entry + dir_entry->rec_len;
+            }
         }
     // print file name
     } else if (inode.i_mode&EXT2_S_IFREG || inode.i_mode&EXT2_S_IFLNK) {

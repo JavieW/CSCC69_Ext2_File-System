@@ -28,9 +28,11 @@ struct ext2_inode *getInodeTable(void);
 
 char unsigned *getBlock(int);
 
-// ls
+// path handling
 int getInodeFromPath(char *);
 
 int searchFileInDir(struct ext2_inode *, char *);
 
 void getFileNameFromPath(char *, char *);
+
+void getParentDirPath(char *path);
