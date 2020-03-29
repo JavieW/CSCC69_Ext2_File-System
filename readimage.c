@@ -114,6 +114,28 @@ int main(int argc, char **argv) {
             }
         }
     }
+    printf("-----------------------\n");
 
+    printf("\nInode bitmap:");
+    for (i=0; i<sb->s_inodes_count/8; i++) {
+        printf(" ");
+        for (j=0; j<8; j++) {
+            printf("%d", ((inode_bitmap[i]>>j)&1));
+        }
+    }
+    printf("\n");
+ //int inode = initInode('z', 1024);
+    //changeInodeBitmap(11, 'a');
+    deleteInode(12);
+    for (i=0; i<sb->s_inodes_count/8; i++) {
+        printf(" ");
+        for (j=0; j<8; j++) {
+            printf("%d", ((inode_bitmap[i]>>j)&1));
+        }
+    }
+    printf("\n");
+    //struct ext2_inode ino = inodeTable[11];
+    
+    
     return 0;
 }

@@ -36,3 +36,11 @@ int searchFileInDir(struct ext2_inode *, char *);
 void getFileNameFromPath(char *, char *);
 
 void getParentDirPath(char *path);
+
+void changeBitmap(char unsigned *, int, char);
+
+int initInode(char, int);
+
+int getFirstEmptyBitIndex(char unsigned *, int);
+
+void deleteInode(int);

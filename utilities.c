@@ -142,3 +142,67 @@ void getParentDirPath(char *path) {
     char *target = strrchr(path, '/');
     *(target+1) = '\0';
 }
+
+
+int getFirstEmptyBitIndex(char unsigned * bitmap, int length){
+    int index = 0;
+    while (index < length) {
+        if (getBit(bitmap, index) == 0) {
+            return index;
+        }
+        index++;
+    }
+    return -1;
+}
+
+
+void changeBitmap(char unsigned *bitmap, int idx, char mode) {
+
+    int turn_on = 00000001;
+    int turn_off = 00000001;
+
+    turn_on = turn_on << idx%8;
+    turn_off = ~(turn_off << idx%8);
+
+    
+    if (mode == 'a'){
+        // turning on the bit
+        bitmap[idx/8] = bitmap[idx/8] | turn_on;
+    }else{
+        // turning off the bit
+        bitmap[idx/8] = bitmap[idx/8] & turn_off;
+    }
+    
+    return ;
+}
+
+
+
+
+int initInode(char mode, int size){
+
+    // find the first free inode
+    int index = getFirstEmptyBitIndex(getInodeBitmap(), getSuperblock()->s_inodes_count);
+    
+    // change its bitmap
+    struct ext2_group_desc *gd = getGroupDesc();
+    char unsigned *bitmap = disk+gd->bg_inode_bitmap*EXT2_BLOCK_SIZE;
+    changeBitmap(bitmap, index, 'a');
+
+    // initialize inode attribute
+    struct ext2_inode *inode_table = getInodeTable();
+    inode_table[index].i_mode = mode;
+    inode_table[index].i_size = size;
+    inode_table[index].i_links_count = 1;
+
+    return index;
+
+}
+
+void deleteInode(int index){
+    // change its bitmap
+    struct ext2_group_desc *gd = getGroupDesc();
+    char unsigned *bitmap = disk+gd->bg_inode_bitmap*EXT2_BLOCK_SIZE;
+    changeBitmap(bitmap, index, 'd');
+
+}
