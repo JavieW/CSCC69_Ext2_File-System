@@ -60,10 +60,11 @@ int main(int argc, char **argv) {
 
     // print all file nemes in directory data block
     if (inode.i_mode & EXT2_S_IFDIR) {
+
         // print file names in direct blocks
         for (int i=0; i<12; i++) {
             if (inode.i_block[i] == 0){
-                break;
+                continue;
             } else {
                 dir_entry = (struct ext2_dir_entry_2 *)getBlock(inode.i_block[i]);
             }
@@ -78,10 +79,17 @@ int main(int argc, char **argv) {
                 dir_entry = (void *) dir_entry + dir_entry->rec_len;
             }
         }
+
         // print file in single indirect blocks
         if (inode.i_block[12] != 0) {
             singleIndirect = getBlock(inode.i_block[12]);
             for(int i = 0; i<EXT2_BLOCK_SIZE/4;i++) {
+                if (singleIndirect[i] == 0) {
+                    continue;
+                } else {
+                    dir_entry = (struct ext2_dir_entry_2 *)getBlock(singleIndirect[i]);
+                }
+
                 total_rec_len = 0;
                 while (total_rec_len < EXT2_BLOCK_SIZE) {
                     if (dir_entry->name[0]!='.' || flagged) {

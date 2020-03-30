@@ -147,7 +147,7 @@ int searchFileInDir(struct ext2_inode *inode, char *fileName) {
     // search in direct block
     for (int i=0; i<12; i++) {
         if (inode->i_block[i] == 0) {
-            break;
+            continue;
         } else {
             dir_entry = (struct ext2_dir_entry_2 *)getBlock(inode->i_block[i]);
         }
@@ -164,8 +164,16 @@ int searchFileInDir(struct ext2_inode *inode, char *fileName) {
     }
     // search in single indirect block
     if (inode->i_block[12] != 0) {
+        // for each block number in single indirect block
         singleIndirect = getBlock(inode->i_block[12]);
         for(int i = 0; i<EXT2_BLOCK_SIZE/4;i++) {
+            if (singleIndirect[i] == 0) {
+                continue;
+            } else { 
+                dir_entry = (struct ext2_dir_entry_2 *)getBlock(singleIndirect[i]);
+            }
+
+            // for each dir entry in the block
             total_rec_len = 0;
             while (total_rec_len < EXT2_BLOCK_SIZE) {
                 if(strcmp(dir_entry->name, fileName)==0) {
@@ -193,7 +201,7 @@ struct ext2_dir_entry_2 *initDirent(struct ext2_inode *parent_inode, int size) {
     // search in direct block
     for(int i = 0; i<12;i++) {
         if (parent_inode->i_block[i] == 0)
-            break;
+            continue;
         new_dir_entry = initDirentDDB(parent_inode->i_block[i], size);
         if (new_dir_entry!=NULL)
             return new_dir_entry;
@@ -201,11 +209,12 @@ struct ext2_dir_entry_2 *initDirent(struct ext2_inode *parent_inode, int size) {
     // search in single indirect block
     if (parent_inode->i_block[12] != 0);
     {
+        // for each block number in single indirect block
         singleIndirect = getBlock(parent_inode->i_block[12]);
         for(int i = 0; i<EXT2_BLOCK_SIZE/4;i++) {
-            if (parent_inode->i_block[i] == 0)
-                break;
-            new_dir_entry = initDirentDDB(parent_inode->i_block[i], size);
+            if (singleIndirect[i] == 0)
+                continue;
+            new_dir_entry = initDirentDDB(singleIndirect[i], size);
             if (new_dir_entry!=NULL)
                 return new_dir_entry;
         }
