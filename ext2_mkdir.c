@@ -6,6 +6,9 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include "ext2.h"
+#include <errno.h>
+#include <string.h>
+#include "utilities.h"
 
 unsigned char *disk;
 
@@ -13,10 +16,7 @@ int main(int argc, char **argv) {
     char path[EXT2_NAME_LEN];
     char pathCopy[EXT2_NAME_LEN];
     char dirName[EXT2_NAME_LEN];
-    int flagged = FALSE;
-    struct ext2_inode *parent_inode;
-    struct ext2_dir_entry_2 *dir_entry = NULL;
-    int total_rec_len;
+    struct ext2_inode *parent_inode, *inode_table, *target_inode;
 
     if(argc!=3) {
         fprintf(stderr, "Usage: ./ext2_mkdir <image file name> <absolute path>\n");
@@ -49,24 +49,32 @@ int main(int argc, char **argv) {
     }
 
     // get the parent directory inode
-    inodeTable = getInodeTable();
-    parent_inode = &inodeTable[parent_inode_num-1];
+    inode_table = getInodeTable();
+    parent_inode = &inode_table[parent_inode_num-1];
     // get the directory name from input
     strcpy(pathCopy, path);
     getFileNameFromPath(dirName, pathCopy);
-    int target_inode = searchFileInDir(parent_inode, dirName);
+    int target_inode_num = searchFileInDir(parent_inode, dirName);
     // if specified dir already exists, return EEXIST
-    if (target_inode != 0) {
+    if (target_inode_num != 0) {
         fprintf(stderr, "Specified directory already exists\n");
         return EEXIST;
     }
+    // initialize an inode for the specified directory
+    target_inode_num = initInode(EXT2_S_IFDIR) + 1;
+    target_inode = &inode_table[target_inode_num-1];
     //create an directory entry for the specified directory
-    createDirEntry(parent_inode, dirName, EXT2_FT_DIR);
-    /*
-    printf("%d\n", (int) ((struct ext2_dir_entry_2 *)getBlock(inodeTable[10].i_block[0])));    
-    printf("%d\n", (int) (((struct ext2_dir_entry_2 *)getBlock(inodeTable[10].i_block[0]))->name));
-    printf("%c\n", *(((struct ext2_dir_entry_2 *)getBlock(inodeTable[10].i_block[0]))->name));
-    printf("%c\n", *(((char *)getBlock(inodeTable[10].i_block[0]))+ 8)); */
-    
+    allocateNewDirent(parent_inode, target_inode_num, EXT2_FT_DIR, dirName);
+    // allocate a new block for the specified directory
+    int block_num = allocateNewBlock();
+    struct ext2_dir_entry_2  *target = (struct ext2_dir_entry_2 *)getBlock(block_num);
+    target->rec_len = EXT2_BLOCK_SIZE;
+    target_inode->i_block[0] = block_num;
+    for (int i = 1; i < 15; i++) {
+        target_inode->i_block[i] = 0;
+    }
+    //create dirents for . and .. in the specified directory
+    allocateNewDirent(target_inode, parent_inode_num, EXT2_FT_DIR, ".");
+    allocateNewDirent(target_inode, target_inode_num, EXT2_FT_DIR, "..");
     return 0;
 }

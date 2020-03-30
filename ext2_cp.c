@@ -14,6 +14,7 @@ unsigned char *disk;
 struct ext2_inode *inodeTable;
 
 int main(int argc, char **argv) {
+    /*
     int src_fd;
     char parentDirPath[EXT2_NAME_LEN];
     char fileName[EXT2_NAME_LEN];
@@ -92,5 +93,5 @@ int main(int argc, char **argv) {
     inodeTable[childInodeNum].i_blocks = (fileSize+511)/512;
 
     // add dir_entry fot this file into parent dir
-    allocateNewDirent(&parentInode, childInodeNum, 'f', fileName);
+    allocateNewDirent(&parentInode, childInodeNum, 'f', fileName); */
 }
