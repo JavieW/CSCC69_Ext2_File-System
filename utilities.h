@@ -24,33 +24,33 @@ char unsigned *getBlockBitmap(void);
 
 char unsigned *getInodeBitmap(void);
 
-int getBit(char unsigned * , int);
+int getBit(char unsigned * bitmap, int index);
 
-int getFirstEmptyBitIndex(char unsigned *, int);
+int getFirstEmptyBitIndex(char unsigned * bitmap, int length);
 
-void changeBitmap(char unsigned *, int, char);
+void changeBitmap(char unsigned *bitmap, int idx, char mode);
 
 // inode
 struct ext2_inode *getInodeTable(void);
 
-int initInode(char, int);
+int initInode(char mode, int size);
 
-void deleteInode(int);
+void deleteInode(int index);
 
 // block, dir_entry
-char unsigned *getBlock(int);
+char unsigned *getBlock(int blockNum);
 
-int searchFileInDir(struct ext2_inode *, char *);
+int searchFileInDir(struct ext2_inode *inode, char *fileName);
 
-int calculateActuralSize(struct ext2_dir_entry_2 *);
+int calculateActuralSize(struct ext2_dir_entry_2 *dirent);
 
-struct ext2_dir_entry_2 *initDirent(struct ext2_inode *, int);
+struct ext2_dir_entry_2 *initDirent(struct ext2_inode *parent_inode, int size);
 
-struct ext2_dir_entry_2 *initDirentDDB(int, int);
+struct ext2_dir_entry_2 *initDirentDDB(int blockNum, int size);
 
 // path handling
-int getInodeFromPath(char *);
+int getInodeFromPath(char *path);
 
-void getFileNameFromPath(char *, char *);
+void getFileNameFromPath(char *fileName, char *path);
 
 void getParentDirPath(char *path);

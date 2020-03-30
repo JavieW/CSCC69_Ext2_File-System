@@ -33,7 +33,7 @@ int getBit(char unsigned * bitmap, int index) {
     return (bitmap[index/8]>>index%8)&1;
 }
 
-int getFirstEmptyBitIndex(char unsigned * bitmap, int length){
+int getFirstEmptyBitIndex(char unsigned * bitmap, int length) {
     int index = 0;
     while (index < length) {
         if (getBit(bitmap, index) == 0) {
@@ -71,7 +71,7 @@ struct ext2_inode *getInodeTable() {
 }
 
 
-int initInode(char mode, int size){
+int initInode(char mode, int size) {
 
     // find the first free inode
     int index = getFirstEmptyBitIndex(getInodeBitmap(), getSuperblock()->s_inodes_count);
@@ -91,7 +91,7 @@ int initInode(char mode, int size){
 
 }
 
-void deleteInode(int index){
+void deleteInode(int index) {
     
     char unsigned *inode_bitmap = getInodeBitmap();
     char unsigned *block_bitmap = getBlockBitmap();
@@ -127,7 +127,7 @@ char unsigned *getBlock(int blockNum) {
     return (char unsigned*)(disk+blockNum*EXT2_BLOCK_SIZE);
 }
 
-int searchFileInDir(struct ext2_inode *cur_inode, char *fileName) {
+int searchFileInDir(struct ext2_inode *inode, char *fileName) {
     /*
     * return inode number of file if the file is found, o/w return 0
     */
@@ -136,14 +136,14 @@ int searchFileInDir(struct ext2_inode *cur_inode, char *fileName) {
     unsigned char *singleIndirect;
 
     // first argument must be directory type
-    assert(cur_inode->i_mode & EXT2_S_IFDIR);
+    assert(inode->i_mode & EXT2_S_IFDIR);
 
     // search in direct block
     for (int i=0; i<12; i++) {
-        if (cur_inode->i_block[i] == 0) {
+        if (inode->i_block[i] == 0) {
             break;
         } else {
-            dir_entry = (struct ext2_dir_entry_2 *)getBlock(cur_inode->i_block[i]);
+            dir_entry = (struct ext2_dir_entry_2 *)getBlock(inode->i_block[i]);
         }
 
         // for each dir entry in the block
@@ -157,8 +157,8 @@ int searchFileInDir(struct ext2_inode *cur_inode, char *fileName) {
         }
     }
     // search in single indirect block
-    if (cur_inode->i_block[12] != 0) {
-        singleIndirect = getBlock(cur_inode->i_block[12]);
+    if (inode->i_block[12] != 0) {
+        singleIndirect = getBlock(inode->i_block[12]);
         for(int i = 0; i<EXT2_BLOCK_SIZE/4;i++) {
             total_rec_len = 0;
             while (total_rec_len < EXT2_BLOCK_SIZE) {
@@ -173,11 +173,11 @@ int searchFileInDir(struct ext2_inode *cur_inode, char *fileName) {
     return 0;
 }
 
-int calculateActuralSize(struct ext2_dir_entry_2 *dirent){
+int calculateActuralSize(struct ext2_dir_entry_2 *dirent) {
     return sizeof(struct ext2_dir_entry_2) + ((dirent->name_len + 4)/4) * 4;
 }
 
-struct ext2_dir_entry_2 *initDirent(struct ext2_inode *parent_inode, int size){
+struct ext2_dir_entry_2 *initDirent(struct ext2_inode *parent_inode, int size) {
     int total_rec_len;
     int residue_len, actural_len;
     struct ext2_dir_entry_2 *dir_entry;

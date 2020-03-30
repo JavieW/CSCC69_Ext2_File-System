@@ -11,6 +11,7 @@
 #include "utilities.h"
 
 unsigned char *disk;
+struct ext2_inode *inodeTable;
 
 int main(int argc, char **argv) {
     char path[EXT2_NAME_LEN];
@@ -18,7 +19,6 @@ int main(int argc, char **argv) {
     char fileName[EXT2_NAME_LEN];
     int flagged = FALSE;
     struct ext2_inode inode;
-    struct ext2_inode *inodeTable;
     struct ext2_dir_entry_2 *dir_entry = NULL;
     int total_rec_len;
     unsigned char *singleIndirect;
