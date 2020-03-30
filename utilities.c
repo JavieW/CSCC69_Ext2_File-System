@@ -71,22 +71,21 @@ struct ext2_inode *getInodeTable() {
 }
 
 
-int initInode(char mode, int size) {
+int initInode(char mode) {
 
     // find the first free inode
     int index = getFirstEmptyBitIndex(getInodeBitmap(), getSuperblock()->s_inodes_count);
     
     // change its bitmap
-    struct ext2_group_desc *gd = getGroupDesc();
-    char unsigned *bitmap = disk+gd->bg_inode_bitmap*EXT2_BLOCK_SIZE;
+    char unsigned *bitmap = getInodeBitmap();
     changeBitmap(bitmap, index, 'a');
 
     // initialize inode attribute
     struct ext2_inode *inode_table = getInodeTable();
     inode_table[index].i_mode = mode;
-    inode_table[index].i_size = size;
+    inode_table[index].i_size = 1024;
     inode_table[index].i_links_count = 1;
-    inode_table[index].i_blocks = 0;
+    inode_table[index].i_blocks = 2;
     return index;
 
 }

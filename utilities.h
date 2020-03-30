@@ -33,7 +33,7 @@ void changeBitmap(char unsigned *bitmap, int idx, char mode);
 // inode
 struct ext2_inode *getInodeTable(void);
 
-int initInode(char mode, int size);
+int initInode(char mode);
 
 void deleteInode(int index);
 
