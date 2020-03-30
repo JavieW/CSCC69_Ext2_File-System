@@ -44,3 +44,5 @@ int initInode(char, int);
 int getFirstEmptyBitIndex(char unsigned *, int);
 
 void deleteInode(int);
+
+struct ext2_dir_entry_2 *initDirentDDB(int, int);

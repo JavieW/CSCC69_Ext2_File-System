@@ -194,15 +194,96 @@ int initInode(char mode, int size){
     inode_table[index].i_mode = mode;
     inode_table[index].i_size = size;
     inode_table[index].i_links_count = 1;
-
+    inode_table[index].i_blocks = 0;
     return index;
 
 }
 
 void deleteInode(int index){
-    // change its bitmap
-    struct ext2_group_desc *gd = getGroupDesc();
-    char unsigned *bitmap = disk+gd->bg_inode_bitmap*EXT2_BLOCK_SIZE;
-    changeBitmap(bitmap, index, 'd');
+    
+    char unsigned *inode_bitmap = getInodeBitmap();
+    char unsigned *block_bitmap = getBlockBitmap();
+    
+    // change inode bitmap
+    changeBitmap(inode_bitmap, index, 'd');
+    
+    struct ext2_inode *inode_table = getInodeTable();
+    struct ext2_inode target = inode_table[index];
+    
+    // delete the block bitmap
+    int i;
+    int block_num;
+    for(i = 0; i<12;i++) {
+        block_num = target.i_block[i];
+        changeBitmap(block_bitmap, block_num, 'd');
+    }
+    // delete single indirect
+    int bp = target.i_block[12];
+    if (bp != 0)
+    {
+        unsigned char *single = getBlock(bp);
+        i=0;
+        while(single[i] != 0) {
+            changeBitmap(block_bitmap, single[i], 'd');
+            i++;
+        }
+    }
+}
 
+int calculateActuralSize(struct ext2_dir_entry_2 *dirent){
+    return sizeof(struct ext2_dir_entry_2) + ((dirent->name_len + 4)/4) * 4;
+}
+
+struct ext2_dir_entry_2 *initDirent(struct ext2_inode *parent_inode, int size){
+    int total_rec_len;
+    int residue_len, actural_len;
+    struct ext2_dir_entry_2 *dir_entry;
+    struct ext2_dir_entry_2 *new_dir_entry;
+    unsigned char *singleIndirect;
+
+    // search in direct block
+    for(int i = 0; i<12;i++) {
+        if (parent_inode->i_block[i] == 0)
+            break;
+        new_dir_entry = initDirentDDB(parent_inode->i_block[i], size);
+        if (new_dir_entry!=NULL)
+            return new_dir_entry;
+    }
+    // search in single indirect block
+    if (parent_inode->i_block[12] != 0);
+    {
+        singleIndirect = getBlock(parent_inode->i_block[12]);
+        for(int i = 0; i<EXT2_BLOCK_SIZE/4;i++) {
+            if (parent_inode->i_block[i] == 0)
+                break;
+            new_dir_entry = initDirentDDB(parent_inode->i_block[i], size);
+            if (new_dir_entry!=NULL)
+                return new_dir_entry;
+        }
+    }
+    return NULL;
+}
+/*
+* Helper function for initDirent
+*/
+struct ext2_dir_entry_2 *initDirentDDB(int blockNum, int size) {
+    struct ext2_dir_entry_2 *dir_entry, *new_dir_entry;
+    int total_rec_len, actural_len, residue_len;
+
+    dir_entry = (struct ext2_dir_entry_2 *)getBlock(blockNum);
+    total_rec_len = 0;
+    while (total_rec_len < EXT2_BLOCK_SIZE) {
+        // calculate residue
+        actural_len = calculateActuralSize(dir_entry);
+        residue_len = dir_entry->rec_len - actural_len;
+        if (residue_len >= size) {
+            new_dir_entry = (void *)dir_entry+actural_len;
+            dir_entry->rec_len=actural_len;
+            new_dir_entry->rec_len=residue_len;
+            return new_dir_entry;
+        }
+        total_rec_len = total_rec_len + dir_entry->rec_len;
+        dir_entry = (void *) dir_entry + dir_entry->rec_len;
+    }
+    return NULL;
 }
