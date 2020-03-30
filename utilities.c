@@ -33,9 +33,9 @@ int getBit(char unsigned * bitmap, int index) {
     return (bitmap[index/8]>>index%8)&1;
 }
 
-int getFirstEmptyBitIndex(char unsigned * bitmap, int length) {
+int getFirstEmptyBitIndex(char unsigned * bitmap, int maxLength) {
     int index = 0;
-    while (index < length) {
+    while (index < maxLength) {
         if (getBit(bitmap, index) == 0) {
             return index;
         }
@@ -60,8 +60,6 @@ void changeBitmap(char unsigned *bitmap, int idx, char mode) {
         // turning off the bit
         bitmap[idx/8] = bitmap[idx/8] & turn_off;
     }
-    
-    return ;
 }
 
 // inode
@@ -86,8 +84,10 @@ int initInode(char mode) {
     inode_table[index].i_size = 1024;
     inode_table[index].i_links_count = 1;
     inode_table[index].i_blocks = 2;
+    for(int i=0; i<15; i++) {
+        inode_table[index].i_block[i] = 0;
+    }
     return index;
-
 }
 
 void deleteInode(int index) {
@@ -121,18 +121,25 @@ void deleteInode(int index) {
     }
 }
 
-// block, dir_entry
+// block
 char unsigned *getBlock(int blockNum) {
     return (char unsigned*)(disk+blockNum*EXT2_BLOCK_SIZE);
 }
 
+int allocateNewBlock() {
+    int index = getFirstEmptyBitIndex(getBlockBitmap(), getSuperblock()->s_blocks_count);
+    changeBitmap(getBlockBitmap(), index, 'a');
+    return index;
+}
+
+// dir_entry
 int searchFileInDir(struct ext2_inode *inode, char *fileName) {
     /*
     * return inode number of file if the file is found, o/w return 0
     */
     struct ext2_dir_entry_2 * dir_entry;
     int total_rec_len;
-    unsigned char *singleIndirect;
+    unsigned int *singleIndirect;
 
     // first argument must be directory type
     assert(inode->i_mode & EXT2_S_IFDIR);
@@ -173,7 +180,7 @@ int searchFileInDir(struct ext2_inode *inode, char *fileName) {
 }
 
 int calculateActuralSize(struct ext2_dir_entry_2 *dirent) {
-    return sizeof(struct ext2_dir_entry_2) + ((dirent->name_len + 4)/4) * 4;
+    return sizeof(struct ext2_dir_entry_2) + ((dirent->name_len+4)/4)*4;
 }
 
 struct ext2_dir_entry_2 *initDirent(struct ext2_inode *parent_inode, int size) {
@@ -181,7 +188,7 @@ struct ext2_dir_entry_2 *initDirent(struct ext2_inode *parent_inode, int size) {
     int residue_len, actural_len;
     struct ext2_dir_entry_2 *dir_entry;
     struct ext2_dir_entry_2 *new_dir_entry;
-    unsigned char *singleIndirect;
+    unsigned int *singleIndirect;
 
     // search in direct block
     for(int i = 0; i<12;i++) {
@@ -229,6 +236,25 @@ struct ext2_dir_entry_2 *initDirentDDB(int blockNum, int size) {
         dir_entry = (void *) dir_entry + dir_entry->rec_len;
     }
     return NULL;
+}
+
+struct ext2_dir_entry_2 *allocateNewDirent(struct ext2_inode *parentInode, int childInodeNum, char type, char *fileName) {
+    int name_len, size;
+    struct ext2_dir_entry_2 *newDirent; 
+
+    // calculate actual size required for new dir_entry
+    int name_len = strlen(fileName);
+    int size = sizeof(struct ext2_dir_entry_2) + ((name_len+4)/4)*4;
+
+    // allocate new dir_entry in parent directory
+    newDirent = initDirent(parentInode, size);
+    
+    // initialize new dir_entry
+    newDirent->inode = childInodeNum;
+    newDirent->file_type = type;
+    newDirent->name_len = strlen;
+    strcpy(newDirent->name, fileName);
+    return newDirent;
 }
 
 // path handling

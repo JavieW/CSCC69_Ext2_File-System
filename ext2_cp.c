@@ -14,11 +14,12 @@ unsigned char *disk;
 struct ext2_inode *inodeTable;
 
 int main(int argc, char **argv) {
-    char path[EXT2_NAME_LEN];
-    char pathCopy[EXT2_NAME_LEN];
+    int src_fd;
+    char parentDirPath[EXT2_NAME_LEN];
     char fileName[EXT2_NAME_LEN];
-    int flagged = FALSE;
-    struct ext2_inode inode;
+    int fileSize;
+    int parentInodeNum, childInodeNum;
+    struct ext2_inode parentInode, childInode;
     struct ext2_dir_entry_2 *dir_entry = NULL;
     int total_rec_len;
 
@@ -26,9 +27,9 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Usage: ext2_cp <image file name> <native path> <absolute path on the disk>\n");
         exit(1);
     }
-    int fd = open(argv[1], O_RDWR);
 
     // read disk and get inode table
+    int fd = open(argv[1], O_RDWR);
     disk = mmap(NULL, 128 * 1024, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if(disk == MAP_FAILED) {
         perror("mmap");
@@ -36,28 +37,60 @@ int main(int argc, char **argv) {
     }
     inodeTable = getInodeTable();
 
-    // read other arguments
-    if(argc == 3) {
-        strcpy(path, argv[2]);
-    } else {
-        if (strcmp(argv[2], "-a")!=0) {
-            fprintf(stderr, "Invalid Flag\n");
-            exit(1);
-        }
-        flagged = TRUE;
-        strcpy(path, argv[3]);
-    }
+    // open native file for read
+    if((src_fd = fopen(argv[2], "r")) == NULL) {
+		fprintf(stderr, "No such file or directory\n");
+        return ENOENT;
+	}
 
-    // get the inode from path
-    strcpy(pathCopy, path);
-    int inodeNum = getInodeFromPath(pathCopy);
-    if (inodeNum == 0) {
+    // get the parent directory inode
+    strcpy(parentDirPath, argv[3]);
+    if (parentDirPath[0]!='/') {
+        fprintf(stderr, "No such file or directory\n");
+        return ENOENT;
+    } else {
+        getParentDirPath(parentDirPath);
+    }
+    parentInodeNum = getInodeFromPath(getParentDirPath);
+    if (parentInodeNum == 0) {
         fprintf(stderr, "No such file or directory\n");
         return ENOENT;
     }
-    inode = inodeTable[inodeNum-1];
+    parentInode = inodeTable[parentInodeNum-1];
 
+    // check file exist
+    getFileNameFromPath(fileName, argv[3]);
+    childInodeNum = searchFileInDir(&parentInode, fileName);
+    if (parentInodeNum != 0) {
+        fprintf(stderr, "File or directory already exist\n");
+        return EEXIST;
+    }
 
-    // create inode base on path
+    // create file and cp
+    childInodeNum = initInode('f');
+    unsigned int *singleIndirect;
+    int nextBlockNum, byteRead;
+    int i = 0;
+    while (feof(src_fd)) {
+        nextBlockNum = allocateBlock();
+        if (i<12) {
+            inodeTable[childInodeNum].i_block[i] = nextBlockNum;
+        } else if (i==12) {
+            inodeTable[childInodeNum].i_block[i] = nextBlockNum;
+            singleIndirect = getBlock(nextBlockNum);
+            nextBlockNum = allocateBlock();
+        } else {
+            singleIndirect[i-13] = nextBlockNum;
+        }
 
+        byteRead = fread(getBlock(nextBlockNum), 1024, 1, src_fd);
+        fileSize += byteRead;
+        i++;
+    }
+    // uptate inode filed
+    inodeTable[childInodeNum].i_size = fileSize;
+    inodeTable[childInodeNum].i_blocks = (fileSize+511)/512;
+
+    // add dir_entry fot this file into parent dir
+    allocateNewDirent(&parentInode, childInodeNum, 'f', fileName);
 }

@@ -26,7 +26,7 @@ char unsigned *getInodeBitmap(void);
 
 int getBit(char unsigned * bitmap, int index);
 
-int getFirstEmptyBitIndex(char unsigned * bitmap, int length);
+int getFirstEmptyBitIndex(char unsigned * bitmap, int maxLength);
 
 void changeBitmap(char unsigned *bitmap, int idx, char mode);
 
@@ -37,9 +37,12 @@ int initInode(char mode);
 
 void deleteInode(int index);
 
-// block, dir_entry
+// block
 char unsigned *getBlock(int blockNum);
 
+int allocateNewBlock(void);
+
+// dir_entry
 int searchFileInDir(struct ext2_inode *inode, char *fileName);
 
 int calculateActuralSize(struct ext2_dir_entry_2 *dirent);
@@ -47,6 +50,8 @@ int calculateActuralSize(struct ext2_dir_entry_2 *dirent);
 struct ext2_dir_entry_2 *initDirent(struct ext2_inode *parent_inode, int size);
 
 struct ext2_dir_entry_2 *initDirentDDB(int blockNum, int size);
+
+struct ext2_dir_entry_2 *allocateNewDirent(struct ext2_inode *parentInode, int childInodeNum, char type, char *fileName);
 
 // path handling
 int getInodeFromPath(char *path);
