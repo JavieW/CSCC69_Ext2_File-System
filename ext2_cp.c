@@ -14,14 +14,11 @@ unsigned char *disk;
 struct ext2_inode *inodeTable;
 
 int main(int argc, char **argv) {
-    int src_fd;
+    FILE *src_fd;
     char parentDirPath[EXT2_NAME_LEN];
     char fileName[EXT2_NAME_LEN];
-    int fileSize;
     int parentInodeNum, childInodeNum;
-    struct ext2_inode parentInode, childInode;
-    struct ext2_dir_entry_2 *dir_entry = NULL;
-    int total_rec_len;
+    struct ext2_inode parentInode;
 
     if(argc!=4) {
         fprintf(stderr, "Usage: ext2_cp <image file name> <native path> <absolute path on the disk>\n");
@@ -51,7 +48,7 @@ int main(int argc, char **argv) {
     } else {
         getParentDirPath(parentDirPath);
     }
-    parentInodeNum = getInodeFromPath(getParentDirPath);
+    parentInodeNum = getInodeFromPath(parentDirPath);
     if (parentInodeNum == 0) {
         fprintf(stderr, "No such file or directory\n");
         return ENOENT;
@@ -70,15 +67,16 @@ int main(int argc, char **argv) {
     childInodeNum = initInode('f');
     unsigned int *singleIndirect;
     int nextBlockNum, byteRead;
+    int fileSize = 0;
     int i = 0;
     while (feof(src_fd)) {
-        nextBlockNum = allocateBlock();
+        nextBlockNum = allocateNewBlock();
         if (i<12) {
             inodeTable[childInodeNum].i_block[i] = nextBlockNum;
         } else if (i==12) {
             inodeTable[childInodeNum].i_block[i] = nextBlockNum;
-            singleIndirect = getBlock(nextBlockNum);
-            nextBlockNum = allocateBlock();
+            singleIndirect = (unsigned int *)getBlock(nextBlockNum);
+            nextBlockNum = allocateNewBlock();
         } else {
             singleIndirect[i-13] = nextBlockNum;
         }
