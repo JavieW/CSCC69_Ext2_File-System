@@ -21,6 +21,7 @@ int main(int argc, char **argv) {
     struct ext2_inode *inodeTable;
     struct ext2_dir_entry_2 *dir_entry = NULL;
     int total_rec_len;
+    unsigned char *singleIndirect;
 
     if(argc!=3 && argc!=4) {
         fprintf(stderr, "Usage: ext2_ls <image file name> <optional flag -a> <absolute path>\n");
@@ -59,7 +60,8 @@ int main(int argc, char **argv) {
 
     // print all file nemes in directory data block
     if (inode.i_mode & EXT2_S_IFDIR) {
-        for (int i=0; i<15; i++) {
+        // print file names in direct blocks
+        for (int i=0; i<12; i++) {
             if (inode.i_block[i] == 0){
                 break;
             } else {
@@ -76,6 +78,21 @@ int main(int argc, char **argv) {
                 dir_entry = (void *) dir_entry + dir_entry->rec_len;
             }
         }
+        // print file in single indirect blocks
+        if (inode.i_block[12] != 0) {
+            singleIndirect = getBlock(inode.i_block[12]);
+            for(int i = 0; i<EXT2_BLOCK_SIZE/4;i++) {
+                total_rec_len = 0;
+                while (total_rec_len < EXT2_BLOCK_SIZE) {
+                    if (dir_entry->name[0]!='.' || flagged) {
+                        printf("%s\n", dir_entry->name);
+                    }
+                    total_rec_len = total_rec_len + dir_entry->rec_len;
+                    dir_entry = (void *) dir_entry + dir_entry->rec_len;
+                }
+            }
+        }
+
     // print file name
     } else if (inode.i_mode&EXT2_S_IFREG || inode.i_mode&EXT2_S_IFLNK) {
         getFileNameFromPath(fileName, path);

@@ -14,24 +14,42 @@
 
 extern char unsigned *disk;
 
+// sb, gp
 struct ext2_super_block *getSuperblock(void);
 
 struct ext2_group_desc *getGroupDesc(void);
 
+// bitmap
 char unsigned *getBlockBitmap(void);
 
 char unsigned *getInodeBitmap(void);
 
 int getBit(char unsigned * , int);
 
+int getFirstEmptyBitIndex(char unsigned *, int);
+
+void changeBitmap(char unsigned *, int, char);
+
+// inode
 struct ext2_inode *getInodeTable(void);
 
+int initInode(char, int);
+
+void deleteInode(int);
+
+// block, dir_entry
 char unsigned *getBlock(int);
+
+int searchFileInDir(struct ext2_inode *, char *);
+
+int calculateActuralSize(struct ext2_dir_entry_2 *);
+
+struct ext2_dir_entry_2 *initDirent(struct ext2_inode *, int);
+
+struct ext2_dir_entry_2 *initDirentDDB(int, int);
 
 // path handling
 int getInodeFromPath(char *);
-
-int searchFileInDir(struct ext2_inode *, char *);
 
 void getFileNameFromPath(char *, char *);
 
