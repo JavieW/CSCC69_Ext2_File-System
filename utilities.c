@@ -258,7 +258,7 @@ struct ext2_dir_entry_2 *allocateNewDirent(struct ext2_inode *parentInode, int c
     // initialize new dir_entry
     newDirent->inode = childInodeNum;
     newDirent->file_type = type;
-    newDirent->name_len = (unsigned char) strlen;
+    newDirent->name_len = (unsigned char) name_len;
     strcpy(newDirent->name, fileName);
     return newDirent;
 }
