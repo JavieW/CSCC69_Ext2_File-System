@@ -277,6 +277,14 @@ struct ext2_dir_entry_2 *allocateNewDirent(struct ext2_inode *parentInode, int c
     return newDirent;
 }
 
+unsigned int *initSingleIndirect(int blockNum) {
+    unsigned int *singleIndirect = (unsigned int *)getBlock(blockNum);
+    for (int i=0; i<(EXT2_BLOCK_SIZE/4); i++) {
+        singleIndirect[i] = 0;
+    }
+    return singleIndirect;
+}
+
 // path handling
 int getInodeFromPath(char *path) {
     /*

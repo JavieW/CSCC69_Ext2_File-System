@@ -55,6 +55,8 @@ struct ext2_dir_entry_2 *initDirentDDB(int blockNum, int size);
 
 struct ext2_dir_entry_2 *allocateNewDirent(struct ext2_inode *parentInode, int childInodeNum, char type, char *fileName);
 
+unsigned int *initSingleIndirect(int blockNum);
+
 // path handling
 int getInodeFromPath(char *path);
 

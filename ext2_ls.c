@@ -21,7 +21,7 @@ int main(int argc, char **argv) {
     struct ext2_inode inode;
     struct ext2_dir_entry_2 *dir_entry = NULL;
     int total_rec_len;
-    unsigned char *singleIndirect;
+    unsigned int *singleIndirect;
 
     if(argc!=3 && argc!=4) {
         fprintf(stderr, "Usage: ext2_ls <image file name> <optional flag -a> <absolute path>\n");
@@ -82,7 +82,7 @@ int main(int argc, char **argv) {
 
         // print file in single indirect blocks
         if (inode.i_block[12] != 0) {
-            singleIndirect = getBlock(inode.i_block[12]);
+            singleIndirect = initSingleIndirect(inode.i_block[12]);
             for(int i = 0; i<EXT2_BLOCK_SIZE/4;i++) {
                 if (singleIndirect[i] == 0) {
                     continue;
