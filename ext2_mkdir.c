@@ -74,7 +74,7 @@ int main(int argc, char **argv) {
         target_inode->i_block[i] = 0;
     }
     //create dirents for . and .. in the specified directory
-    allocateNewDirent(target_inode, parent_inode_num, EXT2_FT_DIR, ".");
-    allocateNewDirent(target_inode, target_inode_num, EXT2_FT_DIR, "..");
+    allocateNewDirent(target_inode, target_inode_num, EXT2_FT_DIR, ".");
+    allocateNewDirent(target_inode, parent_inode_num, EXT2_FT_DIR, "..");
     return 0;
 }
