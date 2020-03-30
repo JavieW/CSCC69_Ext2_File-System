@@ -33,9 +33,11 @@ void changeBitmap(char unsigned *bitmap, int idx, char mode);
 // inode
 struct ext2_inode *getInodeTable(void);
 
-int initInode(char mode);
+int initInode(unsigned short mode);
 
 void deleteInode(int index);
+
+void printInode(struct ext2_inode *inode);
 
 // block
 char unsigned *getBlock(int blockNum);

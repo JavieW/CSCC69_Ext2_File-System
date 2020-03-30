@@ -69,7 +69,7 @@ struct ext2_inode *getInodeTable() {
 }
 
 
-int initInode(char mode) {
+int initInode(unsigned short mode) {
 
     // find the first free inode
     int index = getFirstEmptyBitIndex(getInodeBitmap(), getSuperblock()->s_inodes_count);
@@ -121,6 +121,20 @@ void deleteInode(int index) {
     }
 }
 
+void printInode(struct ext2_inode *inode)
+{
+    printf("i_mode: %d\n", inode->i_mode);
+    printf("i_size: %d\n", inode->i_size);
+    printf("i_links_count: %d\n", inode->i_links_count);
+    printf("i_blocks: %d\n", inode->i_blocks);
+    printf("i_block:\n\t");
+    for(int i=0; i<15; i++) {
+        printf("[%d]: %d ", i, inode->i_block[i]);
+    }
+    printf("\n\n");
+}
+
+
 // block
 char unsigned *getBlock(int blockNum) {
     return (char unsigned*)(disk+blockNum*EXT2_BLOCK_SIZE);
@@ -129,7 +143,7 @@ char unsigned *getBlock(int blockNum) {
 int allocateNewBlock() {
     int index = getFirstEmptyBitIndex(getBlockBitmap(), getSuperblock()->s_blocks_count);
     changeBitmap(getBlockBitmap(), index, 'a');
-    return index;
+    return index+1;
 }
 
 // dir_entry

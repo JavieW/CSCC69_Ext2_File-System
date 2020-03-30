@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
     char parentDirPath[EXT2_NAME_LEN];
     char fileName[EXT2_NAME_LEN];
     int parentInodeNum, childInodeNum;
-    struct ext2_inode parentInode;
+    struct ext2_inode parentInode, childInode;
 
     if(argc!=4) {
         fprintf(stderr, "Usage: ext2_cp <image file name> <native path> <absolute path on the disk>\n");
@@ -67,17 +67,19 @@ int main(int argc, char **argv) {
     }
 
     // create file and cp
-    childInodeNum = initInode('f');
+    childInodeNum = initInode(EXT2_S_IFREG)+1;
+    childInode = inodeTable[parentInodeNum-1];
     unsigned int *singleIndirect;
     int nextBlockNum, byteRead;
     int fileSize = 0;
     int i = 0;
-    while (feof(src_fd)) {
+    while (!feof(src_fd)) {
         nextBlockNum = allocateNewBlock();
+printf("Block %d is allocated for cp content with content:\n", nextBlockNum);
         if (i<12) {
-            inodeTable[childInodeNum].i_block[i] = nextBlockNum;
+            childInode.i_block[i] = nextBlockNum;
         } else if (i==12) {
-            inodeTable[childInodeNum].i_block[i] = nextBlockNum;
+            childInode.i_block[i] = nextBlockNum;
             singleIndirect = (unsigned int *)getBlock(nextBlockNum);
             nextBlockNum = allocateNewBlock();
         } else {
@@ -85,13 +87,15 @@ int main(int argc, char **argv) {
         }
 
         byteRead = fread(getBlock(nextBlockNum), 1024, 1, src_fd);
+printf("%s\n", getBlock(nextBlockNum));
         fileSize += byteRead;
         i++;
     }
+    fclose(src_fd);
     // uptate inode filed
-    inodeTable[childInodeNum].i_size = fileSize;
-    inodeTable[childInodeNum].i_blocks = (fileSize+511)/512;
-
+    childInode.i_size = fileSize;
+    childInode.i_blocks = (fileSize+511)/512;
+printInode(&childInode);
     // add dir_entry fot this file into parent dir
     allocateNewDirent(&parentInode, childInodeNum, 'f', fileName);
 }
