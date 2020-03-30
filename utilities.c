@@ -74,9 +74,10 @@ int initInode(unsigned short mode) {
     // find the first free inode
     int index = getFirstEmptyBitIndex(getInodeBitmap(), getSuperblock()->s_inodes_count);
     
-    // change its bitmap
+    // change its bitmap and update field in gd
     char unsigned *bitmap = getInodeBitmap();
     changeBitmap(bitmap, index, 'a');
+    getGroupDesc()->bg_free_inodes_count--;
 
     // initialize inode attribute
     struct ext2_inode *inode_table = getInodeTable();
@@ -97,26 +98,29 @@ void deleteInode(int index) {
     
     // change inode bitmap
     changeBitmap(inode_bitmap, index, 'd');
+    getGroupDesc()->bg_free_inodes_count++;
     
     struct ext2_inode *inode_table = getInodeTable();
     struct ext2_inode target = inode_table[index];
     
     // delete the block bitmap
     int i;
-    int block_num;
     for(i = 0; i<12;i++) {
-        block_num = target.i_block[i];
-        changeBitmap(block_bitmap, block_num, 'd');
+        if (target.i_block[i] != 0) {
+            changeBitmap(block_bitmap, target.i_block[i], 'd');
+            getGroupDesc()->bg_free_blocks_count++;
+        }
     }
     // delete single indirect
     int bp = target.i_block[12];
     if (bp != 0)
     {
-        unsigned char *single = getBlock(bp);
-        i=0;
-        while(single[i] != 0) {
-            changeBitmap(block_bitmap, single[i], 'd');
-            i++;
+        unsigned int *single = (unsigned int*)getBlock(bp);
+        for (int i=0; i<EXT2_BLOCK_SIZE/4; i++) {
+            if (single[i] != 0) {
+                changeBitmap(block_bitmap, single[i], 'd');
+                getGroupDesc()->bg_free_blocks_count++;
+            }
         }
     }
 }
@@ -131,6 +135,13 @@ void printInode(struct ext2_inode *inode)
     for(int i=0; i<15; i++) {
         printf("[%d]: %d ", i, inode->i_block[i]);
     }
+    if(inode->i_block[12] != 0) {
+        printf("\nfirst 15 single indirect:\n\t");
+        unsigned int *singleIndirect = (unsigned int *)getBlock(inode->i_block[12]);
+        for(int i=0; i<15; i++) {
+            printf("[%d]: %d ", i, singleIndirect[i]);
+        }
+    }
     printf("\n\n");
 }
 
@@ -143,6 +154,7 @@ char unsigned *getBlock(int blockNum) {
 int allocateNewBlock() {
     int index = getFirstEmptyBitIndex(getBlockBitmap(), getSuperblock()->s_blocks_count);
     changeBitmap(getBlockBitmap(), index, 'a');
+    getGroupDesc()->bg_free_blocks_count--;
     return index+1;
 }
 

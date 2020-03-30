@@ -82,7 +82,7 @@ int main(int argc, char **argv) {
 
         // print file in single indirect blocks
         if (inode.i_block[12] != 0) {
-            singleIndirect = initSingleIndirect(inode.i_block[12]);
+            singleIndirect = (unsigned int *)getBlock(inode.i_block[12]);
             for(int i = 0; i<EXT2_BLOCK_SIZE/4;i++) {
                 if (singleIndirect[i] == 0) {
                     continue;

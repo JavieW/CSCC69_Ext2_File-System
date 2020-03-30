@@ -43,5 +43,7 @@
 
 # cp
 ./readimage emptydisk.img
-./ext2_cp emptydisk.img /Users/javiewang/Desktop/hello.txt /hello.txt
+echo "\n---------------------\n"
+./ext2_cp emptydisk.img /Users/javiewang/Desktop/large.txt /large.txt
+echo "\n---------------------\n"
 ./readimage emptydisk.img

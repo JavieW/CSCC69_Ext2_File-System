@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
     int i = 0;
     while (!feof(src_fd)) {
         nextBlockNum = allocateNewBlock();
-printf("Block %d is allocated for cp content with content:\n", nextBlockNum);
+printf("Block %d is allocated for cp, content is:\n", nextBlockNum);
         if (i<12) {
             childInode.i_block[i] = nextBlockNum;
         } else if (i==12) {
@@ -86,13 +86,15 @@ printf("Block %d is allocated for cp content with content:\n", nextBlockNum);
             singleIndirect[i-13] = nextBlockNum;
         }
 
-        byteRead = fread(getBlock(nextBlockNum), 1024, 1, src_fd);
+        byteRead = fread(getBlock(nextBlockNum), 1, 1024, src_fd);
 printf("%s\n", getBlock(nextBlockNum));
+printf("total %d bytes in this block\n", byteRead);
         fileSize += byteRead;
         i++;
     }
     fclose(src_fd);
     // uptate inode filed
+printf("file size: %d\n", fileSize);
     childInode.i_size = fileSize;
     childInode.i_blocks = (fileSize+511)/512;
 printInode(&childInode);
