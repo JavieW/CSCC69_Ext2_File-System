@@ -165,7 +165,7 @@ int searchFileInDir(struct ext2_inode *inode, char *fileName) {
     // search in single indirect block
     if (inode->i_block[12] != 0) {
         // for each block number in single indirect block
-        singleIndirect = getBlock(inode->i_block[12]);
+        singleIndirect = (unsigned int *)getBlock(inode->i_block[12]);
         for(int i = 0; i<EXT2_BLOCK_SIZE/4;i++) {
             if (singleIndirect[i] == 0) {
                 continue;
@@ -192,9 +192,6 @@ int calculateActuralSize(struct ext2_dir_entry_2 *dirent) {
 }
 
 struct ext2_dir_entry_2 *initDirent(struct ext2_inode *parent_inode, int size) {
-    int total_rec_len;
-    int residue_len, actural_len;
-    struct ext2_dir_entry_2 *dir_entry;
     struct ext2_dir_entry_2 *new_dir_entry;
     unsigned int *singleIndirect;
 
@@ -207,10 +204,10 @@ struct ext2_dir_entry_2 *initDirent(struct ext2_inode *parent_inode, int size) {
             return new_dir_entry;
     }
     // search in single indirect block
-    if (parent_inode->i_block[12] != 0);
+    if (parent_inode->i_block[12] != 0)
     {
         // for each block number in single indirect block
-        singleIndirect = getBlock(parent_inode->i_block[12]);
+        singleIndirect = (unsigned int *)getBlock(parent_inode->i_block[12]);
         for(int i = 0; i<EXT2_BLOCK_SIZE/4;i++) {
             if (singleIndirect[i] == 0)
                 continue;
@@ -252,8 +249,8 @@ struct ext2_dir_entry_2 *allocateNewDirent(struct ext2_inode *parentInode, int c
     struct ext2_dir_entry_2 *newDirent; 
 
     // calculate actual size required for new dir_entry
-    int name_len = strlen(fileName);
-    int size = sizeof(struct ext2_dir_entry_2) + ((name_len+4)/4)*4;
+    name_len = strlen(fileName);
+    size = sizeof(struct ext2_dir_entry_2) + ((name_len+4)/4)*4;
 
     // allocate new dir_entry in parent directory
     newDirent = initDirent(parentInode, size);
@@ -261,7 +258,7 @@ struct ext2_dir_entry_2 *allocateNewDirent(struct ext2_inode *parentInode, int c
     // initialize new dir_entry
     newDirent->inode = childInodeNum;
     newDirent->file_type = type;
-    newDirent->name_len = strlen;
+    newDirent->name_len = (unsigned char) strlen;
     strcpy(newDirent->name, fileName);
     return newDirent;
 }
