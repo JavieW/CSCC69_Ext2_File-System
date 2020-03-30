@@ -250,8 +250,6 @@ struct ext2_dir_entry_2 *initDirentDDB(int blockNum, int size) {
         // calculate residue
         actural_len = calculateActuralSize(dir_entry);
         residue_len = dir_entry->rec_len - actural_len;
-        printf("rec len:%d\n",dir_entry->rec_len);
-        printf("residue len:%d\n",residue_len);
         if (residue_len >= size) {
             new_dir_entry = (void *)dir_entry+actural_len;
             dir_entry->rec_len=actural_len;
