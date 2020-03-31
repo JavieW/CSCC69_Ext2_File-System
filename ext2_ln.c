@@ -108,7 +108,9 @@ int main(int argc, char **argv) {
         // implementation for the symbolic link
         childInodeNum = initInode(EXT2_S_IFREG)+1;
         childInode = &inodeTable[childInodeNum-1];
-        
+
+        allocateNewDirent(parentInode, childInodeNum, EXT2_FT_SYMLINK, linkName);
+
         // append path to the inode block
         int block_num = allocateNewBlock();
         char *content = (char *)getBlock(block_num);
