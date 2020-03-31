@@ -33,8 +33,18 @@ int getBit(char unsigned * bitmap, int index) {
     return (bitmap[index/8]>>index%8)&1;
 }
 
-int getFirstEmptyBitIndex(char unsigned * bitmap, int maxLength) {
-    int index = s_first_ino - 1;
+int getFirstEmptyBitIndex(int bitmapNum) {
+    int index, maxLength;
+    unsigned char *bitmap;
+    if (bitmapNum == INODE_BITMAP) {
+        index = EXT2_GOOD_OLD_FIRST_INO;
+        maxLength = getSuperblock()->s_inodes_count;
+        bitmap = getInodeBitmap();
+    } else {
+        index = 0;
+        maxLength = getSuperblock()->s_blocks_count;
+        bitmap = getBlockBitmap();
+    }
     while (index < maxLength) {
         if (getBit(bitmap, index) == 0) {
             return index;
@@ -72,7 +82,7 @@ struct ext2_inode *getInodeTable() {
 int initInode(unsigned short mode) {
 
     // find the first free inode
-    int index = getFirstEmptyBitIndex(getInodeBitmap(), getSuperblock()->s_inodes_count);
+    int index = getFirstEmptyBitIndex(INODE_BITMAP);
     
     // change its bitmap and update field in gd
     char unsigned *bitmap = getInodeBitmap();
@@ -152,7 +162,7 @@ char unsigned *getBlock(int blockNum) {
 }
 
 int allocateNewBlock() {
-    int index = getFirstEmptyBitIndex(getBlockBitmap(), getSuperblock()->s_blocks_count);
+    int index = getFirstEmptyBitIndex(BLOCK_BITMAP);
     changeBitmap(getBlockBitmap(), index, 'a');
     getGroupDesc()->bg_free_blocks_count--;
     return index+1;

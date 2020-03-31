@@ -9,8 +9,11 @@
 #include <errno.h>
 #include "ext2.h"
 
-#define TRUE 1;
-#define FALSE 0;
+#define TRUE 1
+#define FALSE 0
+
+#define INODE_BITMAP 1
+#define BLOCK_BITMAP 0
 
 extern char unsigned *disk;
 
@@ -26,7 +29,7 @@ char unsigned *getInodeBitmap(void);
 
 int getBit(char unsigned * bitmap, int index);
 
-int getFirstEmptyBitIndex(char unsigned * bitmap, int maxLength);
+int getFirstEmptyBitIndex(int bitmap);
 
 void changeBitmap(char unsigned *bitmap, int idx, char mode);
 
