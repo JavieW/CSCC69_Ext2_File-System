@@ -19,9 +19,6 @@ int main(int argc, char **argv) {
     char fileName[EXT2_NAME_LEN];
     int flagged = FALSE;
     struct ext2_inode inode;
-    struct ext2_dir_entry_2 *dir_entry = NULL;
-    int total_rec_len;
-    unsigned char *singleIndirect;
 
     if(argc!=3 && argc!=4) {
         fprintf(stderr, "Usage: ext2_ls <image file name> <optional flag -a> <absolute path>\n");
@@ -57,18 +54,28 @@ int main(int argc, char **argv) {
         return ENOENT;
     }
     inode = inodeTable[inodeNum-1];
-
+    
     // print all file nemes in directory data block
     if (inode.i_mode & EXT2_S_IFDIR) {
+        struct ext2_dir_entry_2 *dir_entry = NULL;
+        unsigned int *singleIndirect = NULL;
+        int total_rec_len = 0;
 
         // print file names in direct blocks
-        for (int i=0; i<12; i++) {
-            if (inode.i_block[i] == 0){
+        for (int i=0; i<13+EXT2_BLOCK_SIZE/4; i++) {
+
+            if (i<12) {
+                if (inode.i_block[i] == 0) continue;
+                dir_entry = (struct ext2_dir_entry_2 *)getBlock(inode.i_block[i]);
+            } else if (i==12) {
+                if (inode.i_block[i] == 0) break;
+                singleIndirect = (unsigned int *)getBlock(inode.i_block[12]);
                 continue;
             } else {
-                dir_entry = (struct ext2_dir_entry_2 *)getBlock(inode.i_block[i]);
+                if (singleIndirect[i-13] == 0) continue;
+                dir_entry = (struct ext2_dir_entry_2 *)getBlock(singleIndirect[i-13]);
             }
-            
+                
             // for each dir entry in the block
             total_rec_len = 0;
             while (total_rec_len < EXT2_BLOCK_SIZE) {
@@ -77,27 +84,6 @@ int main(int argc, char **argv) {
                 }
                 total_rec_len = total_rec_len + dir_entry->rec_len;
                 dir_entry = (void *) dir_entry + dir_entry->rec_len;
-            }
-        }
-
-        // print file in single indirect blocks
-        if (inode.i_block[12] != 0) {
-            singleIndirect = getBlock(inode.i_block[12]);
-            for(int i = 0; i<EXT2_BLOCK_SIZE/4;i++) {
-                if (singleIndirect[i] == 0) {
-                    continue;
-                } else {
-                    dir_entry = (struct ext2_dir_entry_2 *)getBlock(singleIndirect[i]);
-                }
-
-                total_rec_len = 0;
-                while (total_rec_len < EXT2_BLOCK_SIZE) {
-                    if (dir_entry->name[0]!='.' || flagged) {
-                        printf("%s\n", dir_entry->name);
-                    }
-                    total_rec_len = total_rec_len + dir_entry->rec_len;
-                    dir_entry = (void *) dir_entry + dir_entry->rec_len;
-                }
             }
         }
 
