@@ -254,7 +254,7 @@ struct ext2_dir_entry_2 *initDirent(struct ext2_inode *parent_inode, int size) {
     }
 
     // if we cannot find a space, try to allocate a new direct block
-    for(int i = 0; i<12;i++) {
+    for(int i = 0; i<13+EXT2_BLOCK_SIZE/4;i++) {
         if (parent_inode->i_block[i] != 0) {
             continue;
         }
