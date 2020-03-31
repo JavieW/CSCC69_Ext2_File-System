@@ -259,19 +259,21 @@ struct ext2_dir_entry_2 *allocateNewDirent(struct ext2_inode *parent_inode, int 
     }
 
     // if we cannot find a space, try to allocate a new direct block
+    int newBlockNum = 0;
     for(int i = 0; i<13+EXT2_BLOCK_SIZE/4;i++) {
-        if (parent_inode->i_block[i] != 0) {
-            continue;
-        }
-        
-        int newBlockNum = allocateNewBlock();
         if (i<12) {
+            if (parent_inode->i_block[i] != 0) continue;
+            newBlockNum = allocateNewBlock();
             parent_inode->i_block[i] = newBlockNum;
         } else if (i==12) {
+            if (parent_inode->i_block[i] != 0) break;
+            newBlockNum = allocateNewBlock();
             parent_inode->i_block[i] = newBlockNum;
             singleIndirect = initSingleIndirect(parent_inode->i_block[i]);
             continue;
         } else {
+            if (singleIndirect[i-13] != 0) continue;
+            newBlockNum = allocateNewBlock();
             singleIndirect[i-13] = newBlockNum;
         }
 
