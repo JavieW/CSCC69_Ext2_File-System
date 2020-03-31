@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
     }
     parentInode = &inodeTable[parentInodeNum-1];
 
-    // check file exist
+    // check whether the link has already existed
     getFileNameFromPath(linkName, pathFromCopy);
     childInodeNum = searchFileInDir(parentInode, linkName);
     if (childInodeNum != 0) {
@@ -101,20 +101,20 @@ int main(int argc, char **argv) {
         // implementation for the hard link
         initNewDirent(parentInode, inodeNum, EXT2_FT_REG_FILE, linkName);
         // increment the link count of the target inode
-        targetInode.i_links_count++;
+        targetInode->i_links_count++;
 
     }else{
 
         // implementation for the symbolic link
-        childInodeNum = initInode(EXT2_S_IFREG)+1;
+        childInodeNum = initInode(EXT2_S_IFLNK)+1;
         childInode = &inodeTable[childInodeNum-1];
 
         initNewDirent(parentInode, childInodeNum, EXT2_FT_SYMLINK, linkName);
 
         // append path to the inode block
         int block_num = allocateNewBlock();
-        char *content = (char *)getBlock(block_num);
-        strcpy(content, pathTo);
+        //char unsigned *content = (char unsigned *)getBlock(block_num);
+        strcpy((char *)getBlock(block_num), pathTo);
 
         childInode->i_block[0] = block_num;
         
