@@ -18,6 +18,7 @@ int main(int argc, char **argv) {
     char pathTo[EXT2_NAME_LEN];
     char pathFrom[EXT2_NAME_LEN];
     char pathToCopy[EXT2_NAME_LEN];
+    char pathFromCopy[EXT2_NAME_LEN];
     char parentOfPathFrom[EXT2_NAME_LEN];
     char linkName[EXT2_NAME_LEN];
 
@@ -68,7 +69,9 @@ int main(int argc, char **argv) {
     }
 
     // get the upper level inode from pathFrom
+    strcpy(pathFromCopy, pathFrom);
     strcpy(parentOfPathFrom, pathFrom);
+
     if (parentOfPathFrom[0]!='/') {
         perror("Invalid parentDirPath");
         fprintf(stderr, "No such file or directory\n");
@@ -86,7 +89,7 @@ int main(int argc, char **argv) {
     parentInode = &inodeTable[parentInodeNum-1];
 
     // check file exist
-    getFileNameFromPath(linkName, pathFrom);
+    getFileNameFromPath(linkName, pathFromCopy);
     childInodeNum = searchFileInDir(parentInode, linkName);
     if (childInodeNum != 0) {
         fprintf(stderr, "File or directory already exist\n");
@@ -112,6 +115,7 @@ int main(int argc, char **argv) {
         strcpy(content, pathTo);
 
         childInode->i_block[0] = block_num;
+        
         for (int i = 1; i < 15; i++) {
             childInode->i_block[i] = 0;
         }
