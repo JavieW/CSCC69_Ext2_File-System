@@ -70,9 +70,6 @@ int main(int argc, char **argv) {
     struct ext2_dir_entry_2  *target = (struct ext2_dir_entry_2 *)getBlock(block_num);
     target->rec_len = EXT2_BLOCK_SIZE;
     target_inode->i_block[0] = block_num;
-    for (int i = 1; i < 15; i++) {
-        target_inode->i_block[i] = 0;
-    }
     //create dirents for . and .. in the specified directory
     allocateNewDirent(target_inode, target_inode_num, EXT2_FT_DIR, ".");
     allocateNewDirent(target_inode, parent_inode_num, EXT2_FT_DIR, "..");
