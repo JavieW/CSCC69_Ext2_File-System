@@ -33,8 +33,18 @@ int getBit(char unsigned * bitmap, int index) {
     return (bitmap[index/8]>>index%8)&1;
 }
 
-int getFirstEmptyBitIndex(char unsigned * bitmap, int maxLength) {
-    int index = 11;
+int getFirstEmptyBitIndex(int bitmapNum) {
+    int index, maxLength;
+    unsigned char *bitmap;
+    if (bitmapNum == INODE_BITMAP) {
+        index = EXT2_GOOD_OLD_FIRST_INO;
+        maxLength = getSuperblock()->s_inodes_count;
+        bitmap = getInodeBitmap();
+    } else {
+        index = 0;
+        maxLength = getSuperblock()->s_blocks_count;
+        bitmap = getBlockBitmap();
+    }
     while (index < maxLength) {
         if (getBit(bitmap, index) == 0) {
             return index;
@@ -68,60 +78,72 @@ struct ext2_inode *getInodeTable() {
     return (struct ext2_inode *)(disk+gd->bg_inode_table*EXT2_BLOCK_SIZE);
 }
 
-/*
-initialize an inode and return its INDEX
-*/
+struct ext2_inode *getInode(int inodeNum) {
+    struct ext2_inode *inodeTable = getInodeTable();
+    return &inodeTable[inodeNum-1];
+}
+
+/**
+ * return new intialized inode number
+ */
 int initInode(unsigned short mode) {
 
     // find the first free inode
-    int index = getFirstEmptyBitIndex(getInodeBitmap(), getSuperblock()->s_inodes_count);
+    int index = getFirstEmptyBitIndex(INODE_BITMAP);
     
-    if (index != -1) {
-        // change its bitmap
-        char unsigned *bitmap = getInodeBitmap();
-        changeBitmap(bitmap, index, 'a');
+    // change its bitmap and update field in gd
+    char unsigned *bitmap = getInodeBitmap();
+    changeBitmap(bitmap, index, 'a');
+    getGroupDesc()->bg_free_inodes_count--;
 
-        // initialize inode attribute
-        struct ext2_inode *inode_table = getInodeTable();
-        inode_table[index].i_mode = mode;
-        inode_table[index].i_size = 1024;
-        inode_table[index].i_links_count = 1;
-        inode_table[index].i_blocks = 2;
-        for(int i=0; i<15; i++) {
-            inode_table[index].i_block[i] = 0;
-        }
+    // initialize inode attribute
+    struct ext2_inode *inode_table = getInodeTable();
+    inode_table[index].i_mode = mode;
+    inode_table[index].i_size = 1024;
+    inode_table[index].i_links_count = 1;
+    inode_table[index].i_blocks = 2;
+    for(int i=0; i<15; i++) {
+        inode_table[index].i_block[i] = 0;
     }
-    return index;
+    return index+1;
 }
 
-void deleteInode(int index) {
+void deleteInode(int inodeNum) {
     
     char unsigned *inode_bitmap = getInodeBitmap();
     char unsigned *block_bitmap = getBlockBitmap();
     
     // change inode bitmap
-    changeBitmap(inode_bitmap, index, 'd');
+    changeBitmap(inode_bitmap, inodeNum-1, 'd');
+    getGroupDesc()->bg_free_inodes_count++;
     
     struct ext2_inode *inode_table = getInodeTable();
-    struct ext2_inode target = inode_table[index];
+    struct ext2_inode *target = &inode_table[inodeNum-1];
     
     // delete the block bitmap
     int i;
-    int block_num;
     for(i = 0; i<12;i++) {
-        block_num = target.i_block[i];
-        changeBitmap(block_bitmap, block_num, 'd');
+        if (target->i_block[i] != 0) {
+            changeBitmap(block_bitmap, target->i_block[i], 'd');
+            getGroupDesc()->bg_free_blocks_count++;
+        }
     }
     // delete single indirect
-    int bp = target.i_block[12];
+    int bp = target->i_block[12];
     if (bp != 0)
     {
-        unsigned char *single = getBlock(bp);
-        i=0;
-        while(single[i] != 0) {
-            changeBitmap(block_bitmap, single[i], 'd');
-            i++;
+        // delete blocks in single
+        unsigned int *single = (unsigned int*)getBlock(bp);
+        for (int i=0; i<EXT2_BLOCK_SIZE/4; i++) {
+            if (single[i] != 0) {
+                changeBitmap(block_bitmap, single[i], 'd');
+                getGroupDesc()->bg_free_blocks_count++;
+            }
         }
+        
+        // delte single itself
+        changeBitmap(block_bitmap, target->i_block[12], 'd');
+        getGroupDesc()->bg_free_blocks_count++;
     }
 }
 
@@ -135,18 +157,31 @@ void printInode(struct ext2_inode *inode)
     for(int i=0; i<15; i++) {
         printf("[%d]: %d ", i, inode->i_block[i]);
     }
+    if(inode->i_block[12] != 0) {
+        printf("\nfirst 15 single indirect:\n\t");
+        unsigned int *singleIndirect = (unsigned int *)getBlock(inode->i_block[12]);
+        for(int i=0; i<15; i++) {
+            printf("[%d]: %d ", i, singleIndirect[i]);
+        }
+    }
     printf("\n\n");
 }
 
 
 // block
 char unsigned *getBlock(int blockNum) {
+    // block index start at 1, so block Number == block Index
+    // since "block[0]" is allocated for superblock
     return (char unsigned*)(disk+blockNum*EXT2_BLOCK_SIZE);
 }
 
+/**
+ * return new allocated block number
+ */
 int allocateNewBlock() {
-    int index = getFirstEmptyBitIndex(getBlockBitmap(), getSuperblock()->s_blocks_count);
+    int index = getFirstEmptyBitIndex(BLOCK_BITMAP);
     changeBitmap(getBlockBitmap(), index, 'a');
+    getGroupDesc()->bg_free_blocks_count--;
     return index+1;
 }
 
@@ -209,35 +244,62 @@ int calculateActuralSize(struct ext2_dir_entry_2 *dirent) {
     return sizeof(struct ext2_dir_entry_2) + ((dirent->name_len+4)/4)*4;
 }
 
-struct ext2_dir_entry_2 *initDirent(struct ext2_inode *parent_inode, int size) {
-    struct ext2_dir_entry_2 *new_dir_entry;
+struct ext2_dir_entry_2 *allocateNewDirent(struct ext2_inode *parent_inode, int size) {
     unsigned int *singleIndirect;
-
-    // search in direct block
+    struct ext2_dir_entry_2 *new_dir_entry = NULL;
+    // search in all used direct block
     for(int i = 0; i<12;i++) {
-        if (parent_inode->i_block[i] == 0)
-            continue;
-        new_dir_entry = initDirentDDB(parent_inode->i_block[i], size);
-        if (new_dir_entry!=NULL)
-            return new_dir_entry;
+        if (parent_inode->i_block[i] != 0) {
+            new_dir_entry = allocateDirentHelper(parent_inode->i_block[i], size);
+            if (new_dir_entry!=NULL)
+                return new_dir_entry;
+        }
     }
+
     // search in single indirect block
     if (parent_inode->i_block[12] != 0)
     {
         // for each block number in single indirect block
         singleIndirect = (unsigned int *)getBlock(parent_inode->i_block[12]);
         for(int i = 0; i<EXT2_BLOCK_SIZE/4;i++) {
-            if (singleIndirect[i] == 0)
-                continue;
-            new_dir_entry = initDirentDDB(singleIndirect[i], size);
-            if (new_dir_entry!=NULL)
-                return new_dir_entry;
+            if (singleIndirect[i] != 0) {
+                new_dir_entry = allocateDirentHelper(singleIndirect[i], size);
+                if (new_dir_entry!=NULL)
+                    return new_dir_entry;
+            }
         }
+    }
+
+    // if we cannot find a space, try to allocate a new block
+    int newBlockNum = 0;
+    for(int i = 0; i<13+EXT2_BLOCK_SIZE/4;i++) {
+        if (i<12) {
+            if (parent_inode->i_block[i] != 0) continue;
+            newBlockNum = allocateNewBlock();
+            parent_inode->i_block[i] = newBlockNum;
+printf("new block: %d, is allocated for the directory at i_block[%d]\n", parent_inode->i_block[i], i);
+        } else if (i==12) {
+            if (parent_inode->i_block[i] != 0) break;
+            newBlockNum = allocateNewBlock();
+            parent_inode->i_block[i] = newBlockNum;
+            singleIndirect = initSingleIndirect(parent_inode->i_block[i]);
+            continue;
+        } else {
+            if (singleIndirect[i-13] != 0) continue;
+            newBlockNum = allocateNewBlock();
+            singleIndirect[i-13] = newBlockNum;
+        }
+
+        new_dir_entry = (struct ext2_dir_entry_2 *)getBlock(newBlockNum);
+        parent_inode->i_blocks+=(EXT2_BLOCK_SIZE+511)/512;
+        parent_inode->i_size+=EXT2_BLOCK_SIZE;
+        new_dir_entry->rec_len=EXT2_BLOCK_SIZE;
+        return new_dir_entry;
     }
     return NULL;
 }
 
-struct ext2_dir_entry_2 *initDirentDDB(int blockNum, int size) {
+struct ext2_dir_entry_2 *allocateDirentHelper(int blockNum, int size) {
     /*
     * Helper function for initDirent
     */
@@ -262,7 +324,7 @@ struct ext2_dir_entry_2 *initDirentDDB(int blockNum, int size) {
     return NULL;
 }
 
-struct ext2_dir_entry_2 *allocateNewDirent(struct ext2_inode *parentInode, int childInodeNum, char type, char *fileName) {
+struct ext2_dir_entry_2 *initNewDirent(struct ext2_inode *parentInode, int childInodeNum, int type, char *fileName) {
     int name_len, size;
     struct ext2_dir_entry_2 *newDirent; 
 
@@ -271,13 +333,22 @@ struct ext2_dir_entry_2 *allocateNewDirent(struct ext2_inode *parentInode, int c
     size = sizeof(struct ext2_dir_entry_2) + ((name_len+4)/4)*4;
 
     // allocate new dir_entry in parent directory
-    newDirent = initDirent(parentInode, size);
+    newDirent = allocateNewDirent(parentInode, size);
+    
     // initialize new dir_entry
     newDirent->inode = childInodeNum;
     newDirent->file_type = type;
     newDirent->name_len = (unsigned char) name_len;
     strcpy(newDirent->name, fileName);
     return newDirent;
+}
+
+unsigned int *initSingleIndirect(int blockNum) {
+    unsigned int *singleIndirect = (unsigned int *)getBlock(blockNum);
+    for (int i=0; i<(EXT2_BLOCK_SIZE/4); i++) {
+        singleIndirect[i] = 0;
+    }
+    return singleIndirect;
 }
 
 // path handling
@@ -287,7 +358,7 @@ int getInodeFromPath(char *path) {
     */
     struct ext2_inode *inodeTable = getInodeTable();
     int inode_num = EXT2_ROOT_INO;
-    struct ext2_inode cur_inode = inodeTable[inode_num-1];
+    struct ext2_inode *cur_inode = &inodeTable[inode_num-1];
     char *next_file;
     int endWithDir = path[strlen(path)-1] == '/'; // is path endwith '/' ?
 
@@ -300,16 +371,16 @@ int getInodeFromPath(char *path) {
     next_file = strtok(path, "/");
     while(next_file != NULL) {
         // cannot have a non-directory type file in the middle of path
-        if (!(cur_inode.i_mode & EXT2_S_IFDIR)) {
+        if (!(cur_inode->i_mode & EXT2_S_IFDIR)) {
             // Invalid path; non-dir type file inside path
             return 0;
         }
 
         // get next inode from current directory
-        inode_num = searchFileInDir(&cur_inode, next_file);
+        inode_num = searchFileInDir(cur_inode, next_file);
         // update inode to next file with next_file
         if (inode_num != 0) {
-            cur_inode = inodeTable[inode_num-1];
+            cur_inode = &inodeTable[inode_num-1];
         } else {
             // invalid path: file name not found
             return 0;
@@ -318,11 +389,10 @@ int getInodeFromPath(char *path) {
         next_file = strtok(NULL, "/");
     }
 
-    if (!(cur_inode.i_mode & EXT2_S_IFDIR) && endWithDir) {
+    if (!(cur_inode->i_mode & EXT2_S_IFDIR) && endWithDir) {
         // invalid path: path endwith '/' but have a non-dir type file at the end
         return 0;
     }
-
     return inode_num;
 }
 
