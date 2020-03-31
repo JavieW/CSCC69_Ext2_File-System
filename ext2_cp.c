@@ -99,5 +99,5 @@ printf("file size: %d\n", fileSize);
     childInode.i_blocks = (fileSize+511)/512;
 printInode(&childInode);
     // add dir_entry fot this file into parent dir
-    allocateNewDirent(&parentInode, childInodeNum, 'f', fileName);
+    initNewDirent(&parentInode, childInodeNum, EXT2_FT_REG_FILE, fileName);
 }

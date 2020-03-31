@@ -227,13 +227,13 @@ int calculateActuralSize(struct ext2_dir_entry_2 *dirent) {
     return sizeof(struct ext2_dir_entry_2) + ((dirent->name_len+4)/4)*4;
 }
 
-struct ext2_dir_entry_2 *initDirent(struct ext2_inode *parent_inode, int size) {
+struct ext2_dir_entry_2 *allocateNewDirent(struct ext2_inode *parent_inode, int size) {
     unsigned int *singleIndirect;
     struct ext2_dir_entry_2 *new_dir_entry = NULL;
     // search in all used direct block
     for(int i = 0; i<12;i++) {
         if (parent_inode->i_block[i] != 0) {
-            new_dir_entry = initDirentDDB(parent_inode->i_block[i], size);
+            new_dir_entry = allocateDirentHelper(parent_inode->i_block[i], size);
             if (new_dir_entry!=NULL)
                 return new_dir_entry;
         }
@@ -246,7 +246,7 @@ struct ext2_dir_entry_2 *initDirent(struct ext2_inode *parent_inode, int size) {
         singleIndirect = (unsigned int *)getBlock(parent_inode->i_block[12]);
         for(int i = 0; i<EXT2_BLOCK_SIZE/4;i++) {
             if (singleIndirect[i] != 0) {
-                new_dir_entry = initDirentDDB(singleIndirect[i], size);
+                new_dir_entry = allocateDirentHelper(singleIndirect[i], size);
                 if (new_dir_entry!=NULL)
                     return new_dir_entry;
             }
@@ -279,7 +279,7 @@ struct ext2_dir_entry_2 *initDirent(struct ext2_inode *parent_inode, int size) {
     return NULL;
 }
 
-struct ext2_dir_entry_2 *initDirentDDB(int blockNum, int size) {
+struct ext2_dir_entry_2 *allocateDirentHelper(int blockNum, int size) {
     /*
     * Helper function for initDirent
     */
@@ -304,7 +304,7 @@ struct ext2_dir_entry_2 *initDirentDDB(int blockNum, int size) {
     return NULL;
 }
 
-struct ext2_dir_entry_2 *allocateNewDirent(struct ext2_inode *parentInode, int childInodeNum, char type, char *fileName) {
+struct ext2_dir_entry_2 *initNewDirent(struct ext2_inode *parentInode, int childInodeNum, int type, char *fileName) {
     int name_len, size;
     struct ext2_dir_entry_2 *newDirent; 
 
@@ -313,7 +313,7 @@ struct ext2_dir_entry_2 *allocateNewDirent(struct ext2_inode *parentInode, int c
     size = sizeof(struct ext2_dir_entry_2) + ((name_len+4)/4)*4;
 
     // allocate new dir_entry in parent directory
-    newDirent = initDirent(parentInode, size);
+    newDirent = allocateNewDirent(parentInode, size);
     
     // initialize new dir_entry
     newDirent->inode = childInodeNum;

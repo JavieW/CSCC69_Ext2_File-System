@@ -52,11 +52,11 @@ int searchFileInDir(struct ext2_inode *inode, char *fileName);
 
 int calculateActuralSize(struct ext2_dir_entry_2 *dirent);
 
-struct ext2_dir_entry_2 *initDirent(struct ext2_inode *parent_inode, int size);
+struct ext2_dir_entry_2 *allocateNewDirent(struct ext2_inode *parent_inode, int size);
 
-struct ext2_dir_entry_2 *initDirentDDB(int blockNum, int size);
+struct ext2_dir_entry_2 *allocateDirentHelper(int blockNum, int size);
 
-struct ext2_dir_entry_2 *allocateNewDirent(struct ext2_inode *parentInode, int childInodeNum, char type, char *fileName);
+struct ext2_dir_entry_2 *initNewDirent(struct ext2_inode *parentInode, int childInodeNum, int type, char *fileName);
 
 unsigned int *initSingleIndirect(int blockNum);
 
