@@ -34,7 +34,7 @@ int getBit(char unsigned * bitmap, int index) {
 }
 
 int getFirstEmptyBitIndex(char unsigned * bitmap, int maxLength) {
-    int index = 0;
+    int index = 11;
     while (index < maxLength) {
         if (getBit(bitmap, index) == 0) {
             return index;
