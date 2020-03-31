@@ -81,7 +81,7 @@ printf("Block %d is allocated for cp, content is:\n", nextBlockNum);
         } else if (i==12) {
             childInode.i_block[i] = nextBlockNum;
             singleIndirect = initSingleIndirect(nextBlockNum);
-            nextBlockNum = allocateNewBlock();
+            continue;
         } else {
             singleIndirect[i-13] = nextBlockNum;
         }

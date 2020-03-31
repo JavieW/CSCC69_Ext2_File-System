@@ -228,29 +228,53 @@ int calculateActuralSize(struct ext2_dir_entry_2 *dirent) {
 }
 
 struct ext2_dir_entry_2 *initDirent(struct ext2_inode *parent_inode, int size) {
-    struct ext2_dir_entry_2 *new_dir_entry;
     unsigned int *singleIndirect;
-
-    // search in direct block
+    struct ext2_dir_entry_2 *new_dir_entry = NULL;
+    // search in all used direct block
     for(int i = 0; i<12;i++) {
-        if (parent_inode->i_block[i] == 0)
-            continue;
-        new_dir_entry = initDirentDDB(parent_inode->i_block[i], size);
-        if (new_dir_entry!=NULL)
-            return new_dir_entry;
+        if (parent_inode->i_block[i] != 0) {
+            new_dir_entry = initDirentDDB(parent_inode->i_block[i], size);
+            if (new_dir_entry!=NULL)
+                return new_dir_entry;
+        }
     }
+
     // search in single indirect block
     if (parent_inode->i_block[12] != 0)
     {
         // for each block number in single indirect block
         singleIndirect = (unsigned int *)getBlock(parent_inode->i_block[12]);
         for(int i = 0; i<EXT2_BLOCK_SIZE/4;i++) {
-            if (singleIndirect[i] == 0)
-                continue;
-            new_dir_entry = initDirentDDB(singleIndirect[i], size);
-            if (new_dir_entry!=NULL)
-                return new_dir_entry;
+            if (singleIndirect[i] != 0) {
+                new_dir_entry = initDirentDDB(singleIndirect[i], size);
+                if (new_dir_entry!=NULL)
+                    return new_dir_entry;
+            }
         }
+    }
+
+    // if we cannot find a space, try to allocate a new direct block
+    for(int i = 0; i<12;i++) {
+        if (parent_inode->i_block[i] != 0) {
+            continue;
+        }
+        
+        int newBlockNum = allocateNewBlock();
+        if (i<12) {
+            parent_inode->i_block[i] = newBlockNum;
+        } else if (i==12) {
+            parent_inode->i_block[i] = newBlockNum;
+            singleIndirect = initSingleIndirect(parent_inode->i_block[i]);
+            continue;
+        } else {
+            singleIndirect[i-13] = newBlockNum;
+        }
+
+        new_dir_entry = (struct ext2_dir_entry_2 *)getBlock(newBlockNum);
+        parent_inode->i_blocks+=EXT2_BLOCK_SIZE/512;
+        parent_inode->i_size+=EXT2_BLOCK_SIZE;
+        new_dir_entry->rec_len=EXT2_BLOCK_SIZE;
+        return new_dir_entry;
     }
     return NULL;
 }
