@@ -170,9 +170,9 @@ void printInode(struct ext2_inode *inode)
 
 // block
 char unsigned *getBlock(int blockNum) {
-    if (blockNum < 1)
-        perror("getBlock (numbering start at 1)");
-    return (char unsigned*)(disk+(blockNum-1)*EXT2_BLOCK_SIZE);
+    // block index start at 1, so block Number == block Index
+    // since "block[0]" is allocated for superblock
+    return (char unsigned*)(disk+blockNum*EXT2_BLOCK_SIZE);
 }
 
 /**
