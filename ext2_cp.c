@@ -69,7 +69,7 @@ int main(int argc, char **argv) {
     // create file and cp
     childInodeNum = initInode(EXT2_S_IFREG)+1;
     childInode = inodeTable[childInodeNum-1];
-    unsigned int *singleIndirect;
+    unsigned int *singleIndirect = NULL;
     int nextBlockNum, byteRead;
     int fileSize = 0;
     int i = 0;
@@ -96,7 +96,10 @@ printf("total %d bytes in this block\n", byteRead);
     // uptate inode filed
 printf("file size: %d\n", fileSize);
     childInode.i_size = fileSize;
-    childInode.i_blocks = (fileSize+511)/512;
+    if (singleIndirect == NULL)
+        childInode.i_blocks = ((fileSize+1023)/1024)*2;
+    else
+        childInode.i_blocks = ((fileSize+1023)/1024)*2+1;
 printInode(&childInode);
     // add dir_entry fot this file into parent dir
     initNewDirent(&parentInode, childInodeNum, EXT2_FT_REG_FILE, fileName);

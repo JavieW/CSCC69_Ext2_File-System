@@ -125,6 +125,7 @@ void deleteInode(int index) {
     int bp = target.i_block[12];
     if (bp != 0)
     {
+        // delete blocks in single
         unsigned int *single = (unsigned int*)getBlock(bp);
         for (int i=0; i<EXT2_BLOCK_SIZE/4; i++) {
             if (single[i] != 0) {
@@ -132,6 +133,10 @@ void deleteInode(int index) {
                 getGroupDesc()->bg_free_blocks_count++;
             }
         }
+        
+        // delte single itself
+        changeBitmap(block_bitmap, target.i_block[12], 'd');
+        getGroupDesc()->bg_free_blocks_count++;
     }
 }
 
