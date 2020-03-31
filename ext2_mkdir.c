@@ -61,17 +61,17 @@ int main(int argc, char **argv) {
         return EEXIST;
     }
     // initialize an inode for the specified directory
-    target_inode_num = initInode(EXT2_S_IFDIR) + 1;
+    target_inode_num = initInode(EXT2_S_IFDIR);
     target_inode = &inode_table[target_inode_num-1];
     //create an directory entry for the specified directory
-    allocateNewDirent(parent_inode, target_inode_num, EXT2_FT_DIR, dirName);
+    initNewDirent(parent_inode, target_inode_num, EXT2_FT_DIR, dirName);
     // allocate a new block for the specified directory
     int block_num = allocateNewBlock();
     struct ext2_dir_entry_2  *target = (struct ext2_dir_entry_2 *)getBlock(block_num);
     target->rec_len = EXT2_BLOCK_SIZE;
     target_inode->i_block[0] = block_num;
     //create dirents for . and .. in the specified directory
-    allocateNewDirent(target_inode, target_inode_num, EXT2_FT_DIR, ".");
-    allocateNewDirent(target_inode, parent_inode_num, EXT2_FT_DIR, "..");
+    initNewDirent(target_inode, target_inode_num, EXT2_FT_DIR, ".");
+    initNewDirent(target_inode, parent_inode_num, EXT2_FT_DIR, "..");
     return 0;
 }
