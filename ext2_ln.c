@@ -25,7 +25,7 @@ int main(int argc, char **argv) {
     int flagged = FALSE;
     int parentInodeNum, childInodeNum;
 
-    struct ext2_inode targetInode, *parentInode, *childInode;
+    struct ext2_inode *targetInode, *parentInode, *childInode;
 
     if(argc!=4 && argc!=5) {
         fprintf(stderr, "Usage: ext2_ln <image file name> <optional flag -s> <absolute path> <absolute path>\n");
@@ -62,8 +62,8 @@ int main(int argc, char **argv) {
         fprintf(stderr, "No such file or directory\n");
         return ENOENT;
     }
-    targetInode = inodeTable[inodeNum-1];
-    if (targetInode.i_mode == EXT2_S_IFDIR){
+    targetInode = &inodeTable[inodeNum-1];
+    if (targetInode->i_mode == EXT2_S_IFDIR){
         fprintf(stderr, "No link to a directory\n");
         return EISDIR;
     }
@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
     if (!flagged){
 
         // implementation for the hard link
-        allocateNewDirent(parentInode, inodeNum, EXT2_FT_REG_FILE, linkName);
+        initNewDirent(parentInode, inodeNum, EXT2_FT_REG_FILE, linkName);
         // increment the link count of the target inode
         targetInode.i_links_count++;
 
@@ -109,7 +109,7 @@ int main(int argc, char **argv) {
         childInodeNum = initInode(EXT2_S_IFREG)+1;
         childInode = &inodeTable[childInodeNum-1];
 
-        allocateNewDirent(parentInode, childInodeNum, EXT2_FT_SYMLINK, linkName);
+        initNewDirent(parentInode, childInodeNum, EXT2_FT_SYMLINK, linkName);
 
         // append path to the inode block
         int block_num = allocateNewBlock();
