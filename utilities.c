@@ -78,7 +78,14 @@ struct ext2_inode *getInodeTable() {
     return (struct ext2_inode *)(disk+gd->bg_inode_table*EXT2_BLOCK_SIZE);
 }
 
+struct ext2_inode *getInode(int inodeNum) {
+    struct ext2_inode *inodeTable = getInodeTable();
+    return &inodeTable[inodeNum-1];
+}
 
+/**
+ * return new intialized inode number
+ */
 int initInode(unsigned short mode) {
 
     // find the first free inode
@@ -98,20 +105,20 @@ int initInode(unsigned short mode) {
     for(int i=0; i<15; i++) {
         inode_table[index].i_block[i] = 0;
     }
-    return index;
+    return index+1;
 }
 
-void deleteInode(int index) {
+void deleteInode(int inodeNum) {
     
     char unsigned *inode_bitmap = getInodeBitmap();
     char unsigned *block_bitmap = getBlockBitmap();
     
     // change inode bitmap
-    changeBitmap(inode_bitmap, index, 'd');
+    changeBitmap(inode_bitmap, inodeNum-1, 'd');
     getGroupDesc()->bg_free_inodes_count++;
     
     struct ext2_inode *inode_table = getInodeTable();
-    struct ext2_inode target = inode_table[index];
+    struct ext2_inode target = inode_table[inodeNum-1];
     
     // delete the block bitmap
     int i;
@@ -163,9 +170,14 @@ void printInode(struct ext2_inode *inode)
 
 // block
 char unsigned *getBlock(int blockNum) {
-    return (char unsigned*)(disk+blockNum*EXT2_BLOCK_SIZE);
+    if (blockNum < 1)
+        perror("getBlock (numbering start at 1)");
+    return (char unsigned*)(disk+(blockNum-1)*EXT2_BLOCK_SIZE);
 }
 
+/**
+ * return new allocated block number
+ */
 int allocateNewBlock() {
     int index = getFirstEmptyBitIndex(BLOCK_BITMAP);
     changeBitmap(getBlockBitmap(), index, 'a');
