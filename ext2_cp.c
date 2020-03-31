@@ -11,14 +11,14 @@
 #include "utilities.h"
 
 unsigned char *disk;
-struct ext2_inode *inodeTable;
 
 int main(int argc, char **argv) {
     FILE *src_fd;
     char parentDirPath[EXT2_NAME_LEN];
     char fileName[EXT2_NAME_LEN];
     int parentInodeNum, childInodeNum;
-    struct ext2_inode parentInode, childInode;
+    struct ext2_inode *inodeTable;
+    struct ext2_inode *parentInode, *childInode;
 
     if(argc!=4) {
         fprintf(stderr, "Usage: ext2_cp <image file name> <native path> <absolute path on the disk>\n");
@@ -56,11 +56,11 @@ int main(int argc, char **argv) {
         fprintf(stderr, "No such file or directory\n");
         return ENOENT;
     }
-    parentInode = inodeTable[parentInodeNum-1];
+    parentInode = &inodeTable[parentInodeNum-1];
 
     // check file exist
     getFileNameFromPath(fileName, argv[3]);
-    childInodeNum = searchFileInDir(&parentInode, fileName);
+    childInodeNum = searchFileInDir(parentInode, fileName);
     if (childInodeNum != 0) {
         fprintf(stderr, "File or directory already exist\n");
         return EEXIST;
@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
 
     // create file and cp
     childInodeNum = initInode(EXT2_S_IFREG)+1;
-    childInode = inodeTable[childInodeNum-1];
+    childInode = &inodeTable[childInodeNum-1];
     unsigned int *singleIndirect = NULL;
     int nextBlockNum, byteRead;
     int fileSize = 0;
@@ -77,10 +77,12 @@ int main(int argc, char **argv) {
         nextBlockNum = allocateNewBlock();
 printf("Block %d is allocated for cp, content is:\n", nextBlockNum);
         if (i<12) {
-            childInode.i_block[i] = nextBlockNum;
+            childInode->i_block[i] = nextBlockNum;
         } else if (i==12) {
-            childInode.i_block[i] = nextBlockNum;
+            childInode->i_block[i] = nextBlockNum;
             singleIndirect = initSingleIndirect(nextBlockNum);
+printf("N/A, since this block is for singleindirect.\n"); 
+            i++;
             continue;
         } else {
             singleIndirect[i-13] = nextBlockNum;
@@ -95,12 +97,15 @@ printf("total %d bytes in this block\n", byteRead);
     fclose(src_fd);
     // uptate inode filed
 printf("file size: %d\n", fileSize);
-    childInode.i_size = fileSize;
+    childInode->i_size = fileSize;
     if (singleIndirect == NULL)
-        childInode.i_blocks = ((fileSize+1023)/1024)*2;
+        childInode->i_blocks = ((fileSize+1023)/1024)*2;
     else
-        childInode.i_blocks = ((fileSize+1023)/1024)*2+1;
-printInode(&childInode);
+        childInode->i_blocks = ((fileSize+1023)/1024)*2+1;
+printf("childInode: \n");
+printInode(childInode);
     // add dir_entry fot this file into parent dir
-    initNewDirent(&parentInode, childInodeNum, EXT2_FT_REG_FILE, fileName);
+    initNewDirent(parentInode, childInodeNum, EXT2_FT_REG_FILE, fileName);
+    printf("parentInode: \n");
+printInode(parentInode);
 }

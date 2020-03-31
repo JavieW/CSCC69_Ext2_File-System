@@ -118,18 +118,18 @@ void deleteInode(int inodeNum) {
     getGroupDesc()->bg_free_inodes_count++;
     
     struct ext2_inode *inode_table = getInodeTable();
-    struct ext2_inode target = inode_table[inodeNum-1];
+    struct ext2_inode *target = &inode_table[inodeNum-1];
     
     // delete the block bitmap
     int i;
     for(i = 0; i<12;i++) {
-        if (target.i_block[i] != 0) {
-            changeBitmap(block_bitmap, target.i_block[i], 'd');
+        if (target->i_block[i] != 0) {
+            changeBitmap(block_bitmap, target->i_block[i], 'd');
             getGroupDesc()->bg_free_blocks_count++;
         }
     }
     // delete single indirect
-    int bp = target.i_block[12];
+    int bp = target->i_block[12];
     if (bp != 0)
     {
         // delete blocks in single
@@ -142,7 +142,7 @@ void deleteInode(int inodeNum) {
         }
         
         // delte single itself
-        changeBitmap(block_bitmap, target.i_block[12], 'd');
+        changeBitmap(block_bitmap, target->i_block[12], 'd');
         getGroupDesc()->bg_free_blocks_count++;
     }
 }
@@ -270,13 +270,14 @@ struct ext2_dir_entry_2 *allocateNewDirent(struct ext2_inode *parent_inode, int 
         }
     }
 
-    // if we cannot find a space, try to allocate a new direct block
+    // if we cannot find a space, try to allocate a new block
     int newBlockNum = 0;
     for(int i = 0; i<13+EXT2_BLOCK_SIZE/4;i++) {
         if (i<12) {
             if (parent_inode->i_block[i] != 0) continue;
             newBlockNum = allocateNewBlock();
             parent_inode->i_block[i] = newBlockNum;
+printf("new block: %d, is allocated for the directory at i_block[%d]\n", parent_inode->i_block[i], i);
         } else if (i==12) {
             if (parent_inode->i_block[i] != 0) break;
             newBlockNum = allocateNewBlock();
@@ -290,7 +291,7 @@ struct ext2_dir_entry_2 *allocateNewDirent(struct ext2_inode *parent_inode, int 
         }
 
         new_dir_entry = (struct ext2_dir_entry_2 *)getBlock(newBlockNum);
-        parent_inode->i_blocks+=EXT2_BLOCK_SIZE/512;
+        parent_inode->i_blocks+=(EXT2_BLOCK_SIZE+511)/512;
         parent_inode->i_size+=EXT2_BLOCK_SIZE;
         new_dir_entry->rec_len=EXT2_BLOCK_SIZE;
         return new_dir_entry;
@@ -357,7 +358,7 @@ int getInodeFromPath(char *path) {
     */
     struct ext2_inode *inodeTable = getInodeTable();
     int inode_num = EXT2_ROOT_INO;
-    struct ext2_inode cur_inode = inodeTable[inode_num-1];
+    struct ext2_inode *cur_inode = &inodeTable[inode_num-1];
     char *next_file;
     int endWithDir = path[strlen(path)-1] == '/'; // is path endwith '/' ?
 
@@ -370,16 +371,16 @@ int getInodeFromPath(char *path) {
     next_file = strtok(path, "/");
     while(next_file != NULL) {
         // cannot have a non-directory type file in the middle of path
-        if (!(cur_inode.i_mode & EXT2_S_IFDIR)) {
+        if (!(cur_inode->i_mode & EXT2_S_IFDIR)) {
             // Invalid path; non-dir type file inside path
             return 0;
         }
 
         // get next inode from current directory
-        inode_num = searchFileInDir(&cur_inode, next_file);
+        inode_num = searchFileInDir(cur_inode, next_file);
         // update inode to next file with next_file
         if (inode_num != 0) {
-            cur_inode = inodeTable[inode_num-1];
+            cur_inode = &inodeTable[inode_num-1];
         } else {
             // invalid path: file name not found
             return 0;
@@ -388,11 +389,10 @@ int getInodeFromPath(char *path) {
         next_file = strtok(NULL, "/");
     }
 
-    if (!(cur_inode.i_mode & EXT2_S_IFDIR) && endWithDir) {
+    if (!(cur_inode->i_mode & EXT2_S_IFDIR) && endWithDir) {
         // invalid path: path endwith '/' but have a non-dir type file at the end
         return 0;
     }
-
     return inode_num;
 }
 

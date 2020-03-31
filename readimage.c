@@ -97,23 +97,28 @@ int main(int argc, char **argv) {
             if (!(inodeTable[i].i_mode & EXT2_S_IFDIR))
                 continue;
             
-            printf("\tDIR BLOCK NUM: %d (for inode %d)\n", inodeTable[i].i_block[0], i+1);
-            dir_entries = (struct ext2_dir_entry_2 *)getBlock(inodeTable[i].i_block[0]);
-            // while not hit the end og the block
-            while ((int)dir_entries < (int)(disk+(inodeTable[i].i_block[0]+1)*EXT2_BLOCK_SIZE)) {
-                if (dir_entries->file_type == EXT2_FT_UNKNOWN)
-                    type = 'u';
-                else if (dir_entries->file_type == EXT2_FT_REG_FILE)
-                    type = 'f';
-                else if (dir_entries->file_type == EXT2_FT_DIR)
-                    type = 'd';
-                else if (dir_entries->file_type == EXT2_FT_SYMLINK)
-                    type = 'l';
-                printf("Inode: %d rec_len: %d name_len: %d type= %c name=%s\n", dir_entries->inode, dir_entries->rec_len, dir_entries->name_len, type, dir_entries->name);
-                dir_entries = (void *) dir_entries + dir_entries->rec_len;
-            }
+            for (int j=0; j<12; j++) {
+                if (inodeTable[i].i_block[j] == 0) continue;
+                printf("\tDIR BLOCK NUM: %d (for inode %d)\n", inodeTable[i].i_block[j], i+1);
+                dir_entries = (struct ext2_dir_entry_2 *)getBlock(inodeTable[i].i_block[j]);
+                // while not hit the end og the block
+                while ((int)dir_entries < (int)(disk+(inodeTable[i].i_block[0]+1)*EXT2_BLOCK_SIZE)) {
+                    if (dir_entries->file_type == EXT2_FT_UNKNOWN)
+                        type = 'u';
+                    else if (dir_entries->file_type == EXT2_FT_REG_FILE)
+                        type = 'f';
+                    else if (dir_entries->file_type == EXT2_FT_DIR)
+                        type = 'd';
+                    else if (dir_entries->file_type == EXT2_FT_SYMLINK)
+                        type = 'l';
+                    printf("Inode: %d rec_len: %d name_len: %d type= %c name=%s\n", dir_entries->inode, dir_entries->rec_len, dir_entries->name_len, type, dir_entries->name);
+                    dir_entries = (void *) dir_entries + dir_entries->rec_len;
+                }
+            }   
         }
     }
+
+    
 
     return 0;
 }
