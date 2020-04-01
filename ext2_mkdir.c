@@ -77,5 +77,6 @@ int main(int argc, char **argv) {
     firstDirent->name_len = 1;
     firstDirent->rec_len = EXT2_BLOCK_SIZE;
     initNewDirent(target_inode, parent_inode_num, EXT2_FT_DIR, "..");
+    getGroupDesc()->bg_used_dirs_count++;
     return 0;
 }
