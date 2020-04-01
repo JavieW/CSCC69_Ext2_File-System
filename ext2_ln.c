@@ -108,18 +108,17 @@ int main(int argc, char **argv) {
         // implementation for the symbolic link
         childInodeNum = initInode(EXT2_S_IFLNK)+1;
         childInode = &inodeTable[childInodeNum-1];
+        childInode->i_size = strlen(pathFromCopy);
 
         initNewDirent(parentInode, childInodeNum, EXT2_FT_SYMLINK, linkName);
 
-        // append path to the inode block
-        int block_num = allocateNewBlock();
-        //char unsigned *content = (char unsigned *)getBlock(block_num);
-        strcpy((char *)getBlock(block_num), pathTo);
-
-        childInode->i_block[0] = block_num;
-        
-        for (int i = 1; i < 15; i++) {
-            childInode->i_block[i] = 0;
+        if (childInode->i_size < 60){
+            strcpy((char *)childInode->i_block, pathTo);
+        }else{    
+            // append path to the inode block
+            int block_num = allocateNewBlock();
+            strcpy((char *)getBlock(block_num), pathTo);
+            childInode->i_block[0] = block_num;
         }
         
     }
