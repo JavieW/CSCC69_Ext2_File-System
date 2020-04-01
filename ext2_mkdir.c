@@ -73,5 +73,7 @@ int main(int argc, char **argv) {
     //create dirents for . and .. in the specified directory
     initNewDirent(target_inode, target_inode_num, EXT2_FT_DIR, ".");
     initNewDirent(target_inode, parent_inode_num, EXT2_FT_DIR, "..");
+    // increate used dir field in group descriptor
+    getGroupDesc()->bg_used_dirs_count++;
     return 0;
 }
