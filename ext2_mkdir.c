@@ -60,31 +60,22 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Specified directory already exists\n");
         return EEXIST;
     }
+
     // initialize an inode for the specified directory
     target_inode_num = initInode(EXT2_S_IFDIR);
     target_inode = &inode_table[target_inode_num-1];
     //create an directory entry for the specified directory
     initNewDirent(parent_inode, target_inode_num, EXT2_FT_DIR, dirName);
+
     // allocate a new block for the specified directory
-    int block_num = allocateNewBlock();
-    struct ext2_dir_entry_2  *target = (struct ext2_dir_entry_2 *)getBlock(block_num);
-    target->rec_len = EXT2_BLOCK_SIZE;
-    target_inode->i_block[0] = block_num;
-    char type;
-    struct ext2_dir_entry_2 *dir_entry = (struct ext2_dir_entry_2 *)getBlock(inode_table[block_num-1].i_block[0]);
-    if (dir_entry->file_type == EXT2_FT_UNKNOWN)
-        type = 'u';
-    else if (dir_entry->file_type == EXT2_FT_REG_FILE)
-        type = 'f';
-    else if (dir_entry->file_type == EXT2_FT_DIR)
-        type = 'd';
-    else if (dir_entry->file_type == EXT2_FT_SYMLINK)
-        type = 'l';
-    printf("Inode: %d rec_len: %d name_len: %d type= %c name=%s\n", dir_entry->inode, dir_entry->rec_len, dir_entry->name_len, type, dir_entry->name);
-    //create dirents for . and .. in the specified directory
-    initNewDirent(target_inode, target_inode_num, EXT2_FT_DIR, ".");
+    int newBlockNum = allocateNewBlock();
+    target_inode->i_block[0] = newBlockNum;
+    struct ext2_dir_entry_2 *firstDirent = (struct ext2_dir_entry_2 *)getBlock(newBlockNum);
+    firstDirent->file_type = EXT2_FT_DIR;
+    firstDirent->inode = target_inode_num;
+    strcpy(firstDirent->name, ".");
+    firstDirent->name_len = 1;
+    firstDirent->rec_len = EXT2_BLOCK_SIZE;
     initNewDirent(target_inode, parent_inode_num, EXT2_FT_DIR, "..");
-    // increate used dir field in group descriptor
-    getGroupDesc()->bg_used_dirs_count++;
     return 0;
 }
