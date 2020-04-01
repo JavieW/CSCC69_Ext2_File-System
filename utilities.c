@@ -113,14 +113,14 @@ void deleteInode(int inodeNum) {
     char unsigned *inode_bitmap = getInodeBitmap();
     char unsigned *block_bitmap = getBlockBitmap();
     
-    // change inode bitmap
+    // delete inode
     changeBitmap(inode_bitmap, inodeNum-1, 'd');
     getGroupDesc()->bg_free_inodes_count++;
     
     struct ext2_inode *inode_table = getInodeTable();
     struct ext2_inode *target = &inode_table[inodeNum-1];
     
-    // delete the block bitmap
+    // delete block
     int i;
     for(i = 0; i<12;i++) {
         if (target->i_block[i] != 0) {
@@ -128,6 +128,7 @@ void deleteInode(int inodeNum) {
             getGroupDesc()->bg_free_blocks_count++;
         }
     }
+
     // delete single indirect
     int bp = target->i_block[12];
     if (bp != 0)
@@ -241,7 +242,7 @@ int searchFileInDir(struct ext2_inode *inode, char *fileName) {
 }
 
 int calculateActuralSize(struct ext2_dir_entry_2 *dirent) {
-    return sizeof(struct ext2_dir_entry_2) + ((dirent->name_len+4)/4)*4;
+    return ((sizeof(struct ext2_dir_entry_2)+(dirent->name_len+4))/4)*4;
 }
 
 struct ext2_dir_entry_2 *allocateNewDirent(struct ext2_inode *parent_inode, int size) {
@@ -290,10 +291,21 @@ printf("new block: %d, is allocated for the directory at i_block[%d]\n", parent_
             singleIndirect[i-13] = newBlockNum;
         }
 
-        new_dir_entry = (struct ext2_dir_entry_2 *)getBlock(newBlockNum);
+
+        // increse parentdir size
         parent_inode->i_blocks+=(EXT2_BLOCK_SIZE+511)/512;
         parent_inode->i_size+=EXT2_BLOCK_SIZE;
-        new_dir_entry->rec_len=EXT2_BLOCK_SIZE;
+
+        // insert dummy head
+        new_dir_entry = (struct ext2_dir_entry_2 *)getBlock(newBlockNum);
+        new_dir_entry->file_type = EXT2_FT_UNKNOWN;
+        new_dir_entry->inode = 0;
+        new_dir_entry->name[0] = '\0';
+        new_dir_entry->rec_len = ((sizeof(struct ext2_dir_entry_2)+3)/4)*4;
+
+        // return new setted dir_entry
+        new_dir_entry = (void *)new_dir_entry + new_dir_entry->rec_len;
+        new_dir_entry->rec_len=EXT2_BLOCK_SIZE-((sizeof(struct ext2_dir_entry_2)+3)/4)*4;
         return new_dir_entry;
     }
     return NULL;
@@ -341,6 +353,10 @@ struct ext2_dir_entry_2 *initNewDirent(struct ext2_inode *parentInode, int child
     newDirent->name_len = (unsigned char) name_len;
     strcpy(newDirent->name, fileName);
     return newDirent;
+}
+
+void deleteDirent(struct ext2_inode *parentInode, int childInodeNum) {
+
 }
 
 unsigned int *initSingleIndirect(int blockNum) {
@@ -416,4 +432,8 @@ void getParentDirPath(char *path) {
         path[len-1] = '\0';
     char *target = strrchr(path, '/');
     *(target+1) = '\0';
+}
+
+void removeFileInDir(struct ext2_inode *parentInode, int fileName) {
+
 }
