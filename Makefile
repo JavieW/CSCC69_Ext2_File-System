@@ -1,4 +1,4 @@
-PROGS = ext2_cp ext2_ln ext2_ls ext2_mkdir ext2_rm ext2_rm_bonus readimage
+PROGS = ext2_cp ext2_ln ext2_ls ext2_mkdir ext2_rm ext2_rm_bonus readimage test
 all : $(PROGS)
 
 readimage : readimage.o utilities.o
@@ -21,6 +21,9 @@ ext2_rm : ext2_rm.o utilities.o
 
 ext2_rm_bonus : ext2_rm_bonus.o utilities.o 
 	gcc -Wall -g -o ext2_rm_bonus $^
+
+test : test.o utilities.o 
+	gcc -Wall -g -o test $^
 
 %.o : %.c ext2.h utilities.h
 	gcc -Wall -g -c $^

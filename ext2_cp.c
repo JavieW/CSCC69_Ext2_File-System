@@ -36,7 +36,6 @@ int main(int argc, char **argv) {
 
     // open native file for read
     if((src_fd = fopen(argv[2], "r")) == NULL) {
-        perror("src_fd");
 		fprintf(stderr, "No such file or directory\n");
         return ENOENT;
 	}
@@ -44,7 +43,6 @@ int main(int argc, char **argv) {
     // get the parent directory inode
     strcpy(parentDirPath, argv[3]);
     if (parentDirPath[0]!='/') {
-        perror("Invalid parentDirPath");
         fprintf(stderr, "No such file or directory\n");
         return ENOENT;
     } else {
@@ -52,7 +50,6 @@ int main(int argc, char **argv) {
     }
     parentInodeNum = getInodeFromPath(parentDirPath);
     if (parentInodeNum == 0) {
-        perror("parentDirPath not exist");
         fprintf(stderr, "No such file or directory\n");
         return ENOENT;
     }
