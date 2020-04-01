@@ -70,6 +70,17 @@ int main(int argc, char **argv) {
     struct ext2_dir_entry_2  *target = (struct ext2_dir_entry_2 *)getBlock(block_num);
     target->rec_len = EXT2_BLOCK_SIZE;
     target_inode->i_block[0] = block_num;
+    char type;
+    struct ext2_dir_entry_2 *dir_entry = (struct ext2_dir_entry_2 *)getBlock(inode_table[block_num-1].i_block[0]);
+    if (dir_entry->file_type == EXT2_FT_UNKNOWN)
+        type = 'u';
+    else if (dir_entry->file_type == EXT2_FT_REG_FILE)
+        type = 'f';
+    else if (dir_entry->file_type == EXT2_FT_DIR)
+        type = 'd';
+    else if (dir_entry->file_type == EXT2_FT_SYMLINK)
+        type = 'l';
+    printf("Inode: %d rec_len: %d name_len: %d type= %c name=%s\n", dir_entry->inode, dir_entry->rec_len, dir_entry->name_len, type, dir_entry->name);
     //create dirents for . and .. in the specified directory
     initNewDirent(target_inode, target_inode_num, EXT2_FT_DIR, ".");
     initNewDirent(target_inode, parent_inode_num, EXT2_FT_DIR, "..");
