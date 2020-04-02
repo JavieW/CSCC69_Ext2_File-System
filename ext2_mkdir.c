@@ -71,11 +71,19 @@ int main(int argc, char **argv) {
     int newBlockNum = allocateNewBlock();
     target_inode->i_block[0] = newBlockNum;
     struct ext2_dir_entry_2 *firstDirent = (struct ext2_dir_entry_2 *)getBlock(newBlockNum);
+    // initialize the data block information for the target directory
     firstDirent->file_type = EXT2_FT_DIR;
     firstDirent->inode = target_inode_num;
+    // create an entry for .
     strcpy(firstDirent->name, ".");
     firstDirent->name_len = 1;
     firstDirent->rec_len = EXT2_BLOCK_SIZE;
+    // create an entry for ..
     initNewDirent(target_inode, parent_inode_num, EXT2_FT_DIR, "..");
+
+    // update the revelent information
+    getGroupDesc()->bg_used_dirs_count++;
+    parent_inode->i_links_count++;
+    target_inode->i_links_count = 2;
     return 0;
 }
