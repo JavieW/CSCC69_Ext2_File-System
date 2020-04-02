@@ -193,9 +193,10 @@ int searchFileInDir(struct ext2_inode *parentInode, char *childFileName) {
      */
     struct ext2_dir_entry_2 *cur_dir_entry = NULL;
     struct ext2_dir_entry_2 *pre_dir_entry = getPreDirent(parentInode, childFileName);
-    if (pre_dir_entry != NULL)
+    if (pre_dir_entry != NULL) {
         cur_dir_entry = (void *)pre_dir_entry + pre_dir_entry->rec_len;
         return cur_dir_entry->inode;
+    }
     return 0;
 }
 

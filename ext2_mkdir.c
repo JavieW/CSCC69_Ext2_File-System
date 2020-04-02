@@ -81,7 +81,7 @@ int main(int argc, char **argv) {
     // create an entry for ..
     initNewDirent(target_inode, parent_inode_num, EXT2_FT_DIR, "..");
 
-    // update the revelent information
+    // update the relevant information
     getGroupDesc()->bg_used_dirs_count++;
     parent_inode->i_links_count++;
     target_inode->i_links_count = 2;
