@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <time.h>
 #include <assert.h>
 #include "ext2.h"
 #include "utilities.h"
@@ -106,9 +107,7 @@ int initInode(unsigned short mode) {
     }
 
     // set creation time for this inode
-    struct ext2_super_block *sb = getSuperblock();
-    inode_table[index].i_ctime = sb->s_mtime;
-    sb->s_mtime++;
+    inode_table[index].i_ctime = time(NULL);
     return index+1;
 }
 
@@ -123,10 +122,8 @@ void deleteInode(int inodeNum) {
     
     struct ext2_inode *inode_table = getInodeTable();
     struct ext2_inode *target = &inode_table[inodeNum-1];
-    struct ext2_super_block *sb = getSuperblock();
 
-    target->i_dtime = sb->s_mtime;
-    sb->s_mtime++;
+    target->i_dtime = time(NULL);
     
     // delete block
     int i;
