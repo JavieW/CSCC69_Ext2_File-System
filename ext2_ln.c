@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
     }else{
 
         // implementation for the symbolic link
-        childInodeNum = initInode(EXT2_S_IFLNK)+1;
+        childInodeNum = initInode(EXT2_S_IFLNK);
         childInode = &inodeTable[childInodeNum-1];
         childInode->i_size = strlen(pathFromCopy);
 
