@@ -40,8 +40,8 @@ int main(int argc, char **argv) {
 
     // task1, print bitmap
     int i,j;
-    char unsigned *block_bitmap = getBlockBitmap();
-    char unsigned *inode_bitmap = getInodeBitmap();
+    char unsigned *block_bitmap = getBitmap(BLOCK_BITMAP);
+    char unsigned *inode_bitmap = getBitmap(INODE_BITMAP);
     printf("Block bitmap:");
     for (i=0; i<sb->s_blocks_count/8; i++) {
         printf(" ");

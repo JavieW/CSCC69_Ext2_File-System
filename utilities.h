@@ -23,9 +23,7 @@ struct ext2_super_block *getSuperblock(void);
 struct ext2_group_desc *getGroupDesc(void);
 
 // bitmap
-char unsigned *getBlockBitmap(void);
-
-char unsigned *getInodeBitmap(void);
+char unsigned *getBitmap(int bitmapNum);
 
 int getBit(char unsigned * bitmap, int index);
 

@@ -25,9 +25,11 @@ int main(int argc, char **argv) {
     inodeTable = getInodeTable();
 
     int  inodeNum = getInodeFromPath(argv[2]);
+    // inodeNum = 1;
     inode = &inodeTable[inodeNum-1]; 
     unsigned int * single;
-    // print file content for this inode
+    printInode(inode);
+    // print file dirent for this inode
     if(inode->i_mode & EXT2_S_IFDIR) {
         int total_len = 0;
         struct ext2_dir_entry_2 *dir_entry = NULL;
@@ -43,23 +45,7 @@ int main(int argc, char **argv) {
                 }
             }
         }
-        if (inode->i_block[12] != 0) {
-            single = (unsigned int *)getBlock(inode->i_block[12]);
-            for (int j=0; j<EXT2_BLOCK_SIZE/4;j++) {
-                if (single[j] != 0) {
-                    total_len = 0;
-                    dir_entry = (struct ext2_dir_entry_2 *)getBlock(single[j]);
-                    printf("single[%d]: %d\n", j, single[j]);
-                    while (total_len<EXT2_BLOCK_SIZE) {
-                        printf("Inode: %d rec_len: %d name_len: %d type= %d name=%s\n", dir_entry->inode, dir_entry->rec_len, dir_entry->name_len, dir_entry->file_type, dir_entry->name);
-                        total_len+=dir_entry->rec_len;
-                        dir_entry = (void*)dir_entry + dir_entry->rec_len;
-                    }
-                }   
-            }
-        }
-    
-    // print dirent for this inode
+    // print content for this inode
     } else {
         for (int i=0; i<12; i++) {
             if (inode->i_block[i] != 0) {
