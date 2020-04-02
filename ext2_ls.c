@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
             // for each dir entry in the block
             total_rec_len = 0;
             while (total_rec_len < EXT2_BLOCK_SIZE) {
-                if ((dir_entry->name[0]!='.' || flagged) && (dir_entry->name[0] != '\0')) {
+                if ((dir_entry->name[0]!='.' || flagged) && (dir_entry->name_len!=0)) {
                     printf("%s\n", dir_entry->name);
                 }
                 total_rec_len = total_rec_len + dir_entry->rec_len;

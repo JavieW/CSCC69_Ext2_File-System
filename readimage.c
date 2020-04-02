@@ -114,7 +114,8 @@ int main(int argc, char **argv) {
                         type = 'd';
                     else if (dir_entry->file_type == EXT2_FT_SYMLINK)
                         type = 'l';
-                    printf("Inode: %d rec_len: %d name_len: %d type= %c name=%s\n", dir_entry->inode, dir_entry->rec_len, dir_entry->name_len, type, dir_entry->name);
+                    if (dir_entry->name_len != 0)
+                        printf("Inode: %d rec_len: %d name_len: %d type= %c name=%s\n", dir_entry->inode, dir_entry->rec_len, dir_entry->name_len, type, dir_entry->name);
                     total_rec_len = total_rec_len + dir_entry->rec_len;
                     dir_entry = (void *) dir_entry + dir_entry->rec_len;
                 }

@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
     }
 
     // create file and cp
-    childInodeNum = initInode(EXT2_S_IFREG)+1;
+    childInodeNum = initInode(EXT2_S_IFREG);
     childInode = &inodeTable[childInodeNum-1];
     unsigned int *singleIndirect = NULL;
     int nextBlockNum, byteRead;

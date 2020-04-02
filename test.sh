@@ -1,6 +1,7 @@
 #./readimage twolevel.img
 
-# ls
+# ls test case: (dir, file, link) * (n/a, -a) + (invalid path, not exist)
+# check: correctness of output
 # echo "-----test root: <<<./ext2_ls twolevel.img  />>>-----"
 # ./ext2_ls twolevel.img  /
 
@@ -47,7 +48,7 @@
 # cp
 # ./readimage emptydisk.img
 # echo "\n---------------------\n"
-# # ./ext2_cp emptydisk.img /Users/javiewang/Desktop/large.txt /large.txt
+# ./ext2_cp emptydisk.img /Users/javiewang/Desktop/large.txt /large.txt
 # ./ext2_cp emptydisk.img /Users/javiewang/Desktop/hello.txt /largenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargename0.txt
 # ./ext2_cp emptydisk.img /Users/javiewang/Desktop/hello.txt /largenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargename1.txt
 # ./ext2_cp emptydisk.img /Users/javiewang/Desktop/hello.txt /largenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargename2.txt
@@ -62,6 +63,16 @@
 # ./ext2_cp emptydisk.img /Users/javiewang/Desktop/hello.txt /largenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargename11.txt
 # echo "\n---------------------\n"
 # ./readimage emptydisk.img
+# ./ext2_ls emptydisk.img -a /
+
+# rm
+./readimage emptydisk.img
+echo "\n---------------------\n"
+./ext2_rm emptydisk.img /largenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargename2.txt
+echo "\n---------------------\n"
+./readimage emptydisk.img
+./ext2_ls emptydisk.img -a /
+
 
 # mkdir + ls
 # echo "\n----------mkdir--------\n"

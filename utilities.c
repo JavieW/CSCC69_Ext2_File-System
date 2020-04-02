@@ -22,9 +22,10 @@ struct ext2_group_desc *getGroupDesc() {
 char unsigned *getBitmap(int bitmapNum) {
     struct ext2_group_desc *gd = getGroupDesc();
     if (bitmapNum == INODE_BITMAP)
-        return (char unsigned *)(disk+gd->bg_block_bitmap*EXT2_BLOCK_SIZE);
-    else
         return (char unsigned *)(disk+gd->bg_inode_bitmap*EXT2_BLOCK_SIZE);
+    else if (bitmapNum == BLOCK_BITMAP)
+        return (char unsigned *)(disk+gd->bg_block_bitmap*EXT2_BLOCK_SIZE);
+    return NULL;
 }
 
 int getBit(char unsigned *bitmap, int index) {
@@ -215,7 +216,6 @@ int calculateActuralSize(struct ext2_dir_entry_2 *dirent) {
 }
 
 struct ext2_dir_entry_2 *allocateNewDirent(struct ext2_inode *parent_inode, int size) {
-    unsigned int *singleIndirect;
     struct ext2_dir_entry_2 *new_dir_entry = NULL;
     // search in all used direct block
     for(int i = 0; i<12;i++) {
@@ -226,40 +226,12 @@ struct ext2_dir_entry_2 *allocateNewDirent(struct ext2_inode *parent_inode, int 
         }
     }
 
-    // search in single indirect block
-    if (parent_inode->i_block[12] != 0)
-    {
-        // for each block number in single indirect block
-        singleIndirect = (unsigned int *)getBlock(parent_inode->i_block[12]);
-        for(int i = 0; i<EXT2_BLOCK_SIZE/4;i++) {
-            if (singleIndirect[i] != 0) {
-                new_dir_entry = allocateDirentHelper(singleIndirect[i], size);
-                if (new_dir_entry!=NULL)
-                    return new_dir_entry;
-            }
-        }
-    }
-
     // if we cannot find a space, try to allocate a new block
     int newBlockNum = 0;
-    for(int i = 0; i<13+EXT2_BLOCK_SIZE/4;i++) {
-        if (i<12) {
-            if (parent_inode->i_block[i] != 0) continue;
-            newBlockNum = allocateNewBlock();
-            parent_inode->i_block[i] = newBlockNum;
-printf("new block: %d, is allocated for the directory at i_block[%d]\n", parent_inode->i_block[i], i);
-        } else if (i==12) {
-            if (parent_inode->i_block[i] != 0) break;
-            newBlockNum = allocateNewBlock();
-            parent_inode->i_block[i] = newBlockNum;
-            singleIndirect = initSingleIndirect(parent_inode->i_block[i]);
-            continue;
-        } else {
-            if (singleIndirect[i-13] != 0) continue;
-            newBlockNum = allocateNewBlock();
-            singleIndirect[i-13] = newBlockNum;
-        }
-
+    for(int i = 0; i<12;i++) {
+        if (parent_inode->i_block[i] != 0) continue;
+        newBlockNum = allocateNewBlock();
+        parent_inode->i_block[i] = newBlockNum;
 
         // increse parentdir size
         parent_inode->i_blocks+=(EXT2_BLOCK_SIZE+511)/512;
@@ -269,7 +241,7 @@ printf("new block: %d, is allocated for the directory at i_block[%d]\n", parent_
         new_dir_entry = (struct ext2_dir_entry_2 *)getBlock(newBlockNum);
         new_dir_entry->file_type = EXT2_FT_UNKNOWN;
         new_dir_entry->inode = 0;
-        new_dir_entry->name[0] = '\0';
+        new_dir_entry->name_len = 0;
         new_dir_entry->rec_len = ((sizeof(struct ext2_dir_entry_2)+3)/4)*4;
 
         // return new setted dir_entry
@@ -436,6 +408,7 @@ void rm(struct ext2_inode *parentInode, char *childFileName) {
     
     // delete childFile from parentDir and get childInode
     pre_dir_entry = getPreDirent(parentInode, childFileName);
+    cur_dir_entry = (void *)pre_dir_entry + pre_dir_entry->rec_len;
     pre_dir_entry->rec_len += cur_dir_entry->rec_len;
     childInode = getInode(cur_dir_entry->inode);
 
@@ -482,7 +455,9 @@ void rm(struct ext2_inode *parentInode, char *childFileName) {
         }
 
         // if child link count == 0 remove inode
-        if (childInode->i_links_count == 0)
+        if (childInode->i_links_count == 0) {
             deleteInode(cur_dir_entry->inode);
+            getGroupDesc()->bg_used_dirs_count--;
+        }
     }
 }
