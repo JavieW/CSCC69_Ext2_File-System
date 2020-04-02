@@ -88,4 +88,33 @@ echo "\n---------test---------\n"
 echo "\n---------test---------\n"
 ./test emptydisk.img /lost+found
 
+#mkdir
+echo "-----test mkdir at root, this should fail: <<<./ext2_mkdir emptydisk.img />>>-----"
+./ext2_mkdir emptydisk.img /
+echo "-----test mkdir lost+found, this should fail: <<<./ext2_mkdir emptydisk.img /lost+found>>>-----"
+./ext2_mkdir emptydisk.img /lost+found
+echo "-----test mkdir hello at root, this should work: <<<./ext2_mkdir emptydisk.img /hello>>>-----"
+./ext2_mkdir emptydisk.img /hello
+./ext2_ls emptydisk.img /
+echo "-----test mkdir hello at root again, this should fail: <<<./ext2_mkdir emptydisk.img /hello/>>>-----"
+./ext2_mkdir emptydisk.img /hello/
+./ext2_ls emptydisk.img /
+echo "-----test mkdir world at non-existing dir, this should fail: <<<./ext2_mkdir emptydisk.img /hi/world>>>-----"
+./ext2_mkdir emptydisk.img /hi/world
+echo "-----test mkdir world at hello dir, this should work: <<<./ext2_mkdir emptydisk.img /hello/world>>>-----"
+./ext2_mkdir emptydisk.img /hello/world
+./ext2_ls emptydisk.img /hello
+echo "-----test mkdir good at hello dir, this should work: <<<./ext2_mkdir emptydisk.img /hello/good>>>-----"
+./ext2_mkdir emptydisk.img /hello/good
+./ext2_ls emptydisk.img /hello
+echo "-----test mkdir world at file afile, this should fail: <<<./ext2_mkdir twolevel.img /afile/world>>>-----"
+./ext2_mkdir twolevel.img /afile/world
+echo "-----test mkdir . and .. at hello dir, this should fail: <<<./ext2_mkdir emptydisk.img /hello/.(..)>>>-----"
+./ext2_mkdir emptydisk.img /hello/.
+./ext2_mkdir emptydisk.img /hello/..
+echo "-----test mkdir with no input img file, this should fail: <<<./ext2_mkdir /hello/>>>-----"
+./ext2_mkdir /hello/
+echo "-----test mkdir with no wrong img file, this should fail: <<<./ext2_mkdir haha.img /hello/>>>-----"
+./ext2_mkdir haha.img /hello/
+
 # rm
