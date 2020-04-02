@@ -23,7 +23,8 @@ int main(int argc, char **argv) {
     char linkName[EXT2_NAME_LEN];
 
     int flagged = FALSE;
-    int parentInodeNum, childInodeNum;
+    int inodeNum, parentInodeNum, childInodeNum;
+
 
     struct ext2_inode *targetInode, *parentInode, *childInode;
 
@@ -57,7 +58,14 @@ int main(int argc, char **argv) {
 
     // get the inode from pathTo
     strcpy(pathToCopy, pathTo);
-    int inodeNum = getInodeFromPath(pathToCopy);
+    if (pathToCopy[0]!='/') {
+        perror("Invalid path argument");
+        fprintf(stderr, "No such file or directory\n");
+        return ENOENT;
+    } else {
+        inodeNum = getInodeFromPath(pathToCopy);
+    }
+
     if (inodeNum == 0) {
         fprintf(stderr, "No such file or directory\n");
         return ENOENT;
@@ -106,7 +114,7 @@ int main(int argc, char **argv) {
     }else{
 
         // implementation for the symbolic link
-        childInodeNum = initInode(EXT2_S_IFLNK)+1;
+        childInodeNum = initInode(EXT2_S_IFLNK);
         childInode = &inodeTable[childInodeNum-1];
         childInode->i_size = strlen(pathFromCopy);
 

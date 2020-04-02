@@ -50,6 +50,8 @@ char unsigned *getBlock(int blockNum);
 int allocateNewBlock(void);
 
 // dir_entry
+struct ext2_dir_entry_2 *getPreDirent(struct ext2_inode *parentInode, char *childFileName);
+
 int searchFileInDir(struct ext2_inode *inode, char *fileName);
 
 int calculateActuralSize(struct ext2_dir_entry_2 *dirent);
@@ -68,3 +70,5 @@ int getInodeFromPath(char *path);
 void getFileNameFromPath(char *fileName, char *path);
 
 void getParentDirPath(char *path);
+
+

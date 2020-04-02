@@ -63,9 +63,10 @@ int main(int argc, char **argv) {
         return ENOENT;
     }
 
-    deleteInode(childInodeNum);
-    // remove direct
-    //removeFileInDir(parentInode, childInodeNum);
+    // remove dir_entry from parent dir
 
+    // decrease i_links_count of childInode
+
+    // if i_links_count
 
 }

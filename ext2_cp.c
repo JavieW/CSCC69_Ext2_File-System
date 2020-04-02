@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
     // get the parent directory inode
     strcpy(parentDirPath, argv[3]);
     if (parentDirPath[0]!='/') {
-        fprintf(stderr, "No such file or directory\n");
+        fprintf(stderr, "Must be absolute path\n");
         return ENOENT;
     } else {
         getParentDirPath(parentDirPath);
