@@ -41,6 +41,34 @@
 #echo "-----test print a file name, this should work but fail: <<<./ext2_ls onedirectory.img /level1/bfilee.s>>>-----"
 #./ext2_ls onedirectory.img /level1/bfilee.s
 
+# cp
+# ./readimage emptydisk.img
+# echo "\n---------------------\n"
+# ./ext2_cp emptydisk.img /Users/javiewang/Desktop/large.txt /large.txt
+# ./ext2_cp emptydisk.img /Users/javiewang/Desktop/hello.txt /largenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargename0.txt
+# ./ext2_cp emptydisk.img /Users/javiewang/Desktop/hello.txt /largenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargename1.txt
+# ./ext2_cp emptydisk.img /Users/javiewang/Desktop/hello.txt /largenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargename2.txt
+# ./ext2_cp emptydisk.img /Users/javiewang/Desktop/hello.txt /largenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargename3.txt
+# ./ext2_cp emptydisk.img /Users/javiewang/Desktop/hello.txt /largenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargename4.txt
+# ./ext2_cp emptydisk.img /Users/javiewang/Desktop/hello.txt /largenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargename5.txt
+# ./ext2_cp emptydisk.img /Users/javiewang/Desktop/hello.txt /largenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargename6.txt
+# ./ext2_cp emptydisk.img /Users/javiewang/Desktop/hello.txt /largenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargename7.txt
+# ./ext2_cp emptydisk.img /Users/javiewang/Desktop/hello.txt /largenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargename8.txt
+# ./ext2_cp emptydisk.img /Users/javiewang/Desktop/hello.txt /largenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargename9.txt
+# ./ext2_cp emptydisk.img /Users/javiewang/Desktop/hello.txt /largenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargename10.txt
+# ./ext2_cp emptydisk.img /Users/javiewang/Desktop/hello.txt /largenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargename11.txt
+# echo "\n---------------------\n"
+# ./readimage emptydisk.img
+# ./ext2_ls emptydisk.img -a /
+
+# rm
+./readimage emptydisk.img
+echo "\n---------------------\n"
+./ext2_rm emptydisk.img /largenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargename2.txt
+echo "\n---------------------\n"
+./readimage emptydisk.img
+./ext2_ls emptydisk.img -a /
+
 echo "-----test mkdir at root, this should fail: <<<./ext2_mkdir emptydisk.img />>>-----"
 ./ext2_mkdir emptydisk.img /
 echo "-----test mkdir lost+found, this should fail: <<<./ext2_mkdir emptydisk.img /lost+found>>>-----"
