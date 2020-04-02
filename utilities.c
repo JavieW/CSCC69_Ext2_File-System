@@ -157,6 +157,7 @@ void deleteInode(int inodeNum) {
 
 void printInode(struct ext2_inode *inode)
 {
+    printf("sb_mtime: %d\n", getSuperblock()->s_mtime);
     printf("i_ctime: %d\n", inode->i_ctime);
     printf("i_dtime: %d\n", inode->i_dtime);
     printf("i_mode: %d\n", inode->i_mode);
