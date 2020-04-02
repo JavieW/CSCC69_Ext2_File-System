@@ -117,6 +117,7 @@ int main(int argc, char **argv) {
         childInodeNum = initInode(EXT2_S_IFLNK);
         childInode = &inodeTable[childInodeNum-1];
         childInode->i_size = strlen(pathFromCopy);
+        childInode->i_blocks = 0;
 
         initNewDirent(parentInode, childInodeNum, EXT2_FT_SYMLINK, linkName);
 

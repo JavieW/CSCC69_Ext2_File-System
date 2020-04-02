@@ -71,4 +71,4 @@ void getFileNameFromPath(char *fileName, char *path);
 
 void getParentDirPath(char *path);
 
-
+void rm(struct ext2_inode *parentInode, char *childFileName);

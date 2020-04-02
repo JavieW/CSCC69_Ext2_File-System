@@ -20,7 +20,7 @@ int main(int argc, char **argv) {
     struct ext2_inode *parentInode, *childInode;
 
     if(argc!=3) {
-        fprintf(stderr, "Usage: ext2_rm <image file name> <absolute path on the disk>\n");
+        fprintf(stderr, "Usage: ext2_rm <image file name> <absolute path>\n");
         exit(1);
     }
 
@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
     parentInode = &inodeTable[parentInodeNum-1];
 
     // check file exist
-    getFileNameFromPath(fileName, argv[3]);
+    getFileNameFromPath(fileName, argv[2]);
     childInodeNum = searchFileInDir(parentInode, fileName);
     if (childInodeNum == 0) {
         fprintf(stderr, "No such file or directory\n");
@@ -63,10 +63,5 @@ int main(int argc, char **argv) {
         return ENOENT;
     }
 
-    // remove dir_entry from parent dir
-
-    // decrease i_links_count of childInode
-
-    // if i_links_count
-
+    rm(parentInode, fileName);
 }

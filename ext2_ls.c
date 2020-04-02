@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
     char path[EXT2_NAME_LEN];
     char pathCopy[EXT2_NAME_LEN];
     char fileName[EXT2_NAME_LEN];
-    int flagged = FALSE;
+    int flagged = 0;
     struct ext2_inode inode;
 
     if(argc!=3 && argc!=4) {
@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
             fprintf(stderr, "Invalid Flag\n");
             exit(1);
         }
-        flagged = TRUE;
+        flagged = 1;
         strcpy(path, argv[3]);
     }
 

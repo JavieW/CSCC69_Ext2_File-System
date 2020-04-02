@@ -83,6 +83,7 @@ struct ext2_inode *getInode(int inodeNum) {
     return &inodeTable[inodeNum-1];
 }
 
+///////////////refactoring: high////////////////////
 /**
  * return new intialized inode number
  */
@@ -193,9 +194,10 @@ int searchFileInDir(struct ext2_inode *parentInode, char *childFileName) {
      */
     struct ext2_dir_entry_2 *cur_dir_entry = NULL;
     struct ext2_dir_entry_2 *pre_dir_entry = getPreDirent(parentInode, childFileName);
-    if (pre_dir_entry != NULL)
+    if (pre_dir_entry != NULL) {
         cur_dir_entry = (void *)pre_dir_entry + pre_dir_entry->rec_len;
         return cur_dir_entry->inode;
+    }
     return 0;
 }
 
@@ -416,22 +418,62 @@ struct ext2_dir_entry_2 *getPreDirent(struct ext2_inode *parentInode, char *chil
     return NULL;
 }
 
-// void remove(struct ext2_inode *parentInode, char *childFileName) {
-//     // delete childFile from parentDir and get childInode
+void rm(struct ext2_inode *parentInode, char *childFileName) {
+    struct ext2_dir_entry_2 *pre_dir_entry = NULL;
+    struct ext2_dir_entry_2 *cur_dir_entry = NULL;
+    struct ext2_dir_entry_2 *child_dir_entry = NULL;
+    struct ext2_inode *childInode = NULL;
+    int total_rec_len;
+    
+    // delete childFile from parentDir and get childInode
+    pre_dir_entry = getPreDirent(parentInode, childFileName);
+    pre_dir_entry->rec_len += cur_dir_entry->rec_len;
+    childInode = getInode(cur_dir_entry->inode);
 
-//     // base case1, if childInode is a link
-//         // delete dir_entry from parent dir
-    
-//     // base case2, if childInode is a file
-//         // delete dir_entry from parent dir
-//         // reduce link count
-//         // if link count == 0 remove inode
-    
-//     // recursive case, if childInode is a dir
-//         // delete . (reduce link count for self)
-//         // delete .. (reduce link count for parent)
-//         // for each file name (other than . and ..) in child dir
-//             // call recusion
-//         // if child link count == 0 remove inode
-        
-// }
+    // base case1, if childInode is Symbolic link
+    if (cur_dir_entry->file_type == EXT2_FT_SYMLINK)
+    {
+        // just delete the inode since
+        deleteInode(cur_dir_entry->inode);
+    }
+    // base case2, if childInode is a file
+    else if (cur_dir_entry->file_type == EXT2_FT_REG_FILE)
+    {
+        // reduce link count
+        childInode->i_links_count--;
+
+        // if link count == 0 remove inode
+        if (childInode->i_links_count == 0)
+            deleteInode(cur_dir_entry->inode);
+    }
+    // recursive case, if childInode is a dir
+    else if (cur_dir_entry->file_type == EXT2_FT_DIR)
+    {
+        // reduce link count for self and parent (. and ..)
+        childInode->i_links_count--;
+        parentInode->i_links_count--;
+
+        // for each file name (other than . and ..) in child dir, call recursion
+        for (int i=0; i<12; i++) {
+            if (childInode->i_block[i] == 0)
+                continue;
+            
+            child_dir_entry = (struct ext2_dir_entry_2 *)getBlock(childInode->i_block[i]);
+            total_rec_len = 0;
+            // for each dir entry in the block
+            while (total_rec_len < EXT2_BLOCK_SIZE) {
+                if (strcmp(cur_dir_entry->name, "")!=0 &&
+                    strcmp(cur_dir_entry->name, ".")!=0 &&
+                    strcmp(cur_dir_entry->name, "..")!=0)
+                    rm(childInode, cur_dir_entry->name);
+                
+                total_rec_len = total_rec_len + cur_dir_entry->rec_len;
+                cur_dir_entry = (void *) cur_dir_entry + cur_dir_entry->rec_len;
+            }
+        }
+
+        // if child link count == 0 remove inode
+        if (childInode->i_links_count == 0)
+            deleteInode(cur_dir_entry->inode);
+    }
+}
