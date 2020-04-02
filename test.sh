@@ -87,7 +87,7 @@ echo "-----test mkdir world at hello dir, this should work: <<<./ext2_mkdir empt
 echo "-----test mkdir good at hello dir, this should work: <<<./ext2_mkdir emptydisk.img /hello/good>>>-----"
 ./ext2_mkdir emptydisk.img /hello/good
 ./ext2_ls emptydisk.img /hello
-echo "-----test mkdir world at file afile, this should work: <<<./ext2_mkdir twolevel.img /afile/world>>>-----"
+echo "-----test mkdir world at file afile, this should fail: <<<./ext2_mkdir twolevel.img /afile/world>>>-----"
 ./ext2_mkdir twolevel.img /afile/world
 echo "-----test mkdir . and .. at hello dir, this should fail: <<<./ext2_mkdir emptydisk.img /hello/.(..)>>>-----"
 ./ext2_mkdir emptydisk.img /hello/.
