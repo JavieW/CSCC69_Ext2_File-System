@@ -1,7 +1,7 @@
-#./readimage twolevel.img
+# #./readimage twolevel.img
 
-# ls test case: (dir, file, link) * (n/a, -a) + (invalid path, not exist)
-# check: correctness of output
+# # ls test case: (dir, file, link) * (n/a, -a) + (invalid path, not exist)
+# # check: correctness of output
 # echo "-----test root: <<<./ext2_ls twolevel.img  />>>-----"
 # ./ext2_ls twolevel.img  /
 
@@ -45,7 +45,7 @@
 # echo "-----test print a file name, this should work but fail: <<<./ext2_ls onedirectory.img /level1/bfilee.s>>>-----"
 # ./ext2_ls onedirectory.img /level1/bfilee.s
 
-# cp
+# # cp
 # ./readimage emptydisk.img
 # echo "\n---------------------\n"
 # ./ext2_cp emptydisk.img /Users/javiewang/Desktop/large.txt /large.txt
@@ -66,26 +66,26 @@
 # ./ext2_ls emptydisk.img -a /
 
 # rm
-./readimage emptydisk.img
-echo "\n---------------------\n"
-./ext2_rm emptydisk.img /largenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargename2.txt
-echo "\n---------------------\n"
-./readimage emptydisk.img
-./ext2_ls emptydisk.img -a /
+# ./readimage emptydisk.img
+# echo "\n---------------------\n"
+# ./ext2_rm emptydisk.img /largenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargenamelargename7.txt
+# echo "\n---------------------\n"
+# ./readimage emptydisk.img
+# ./ext2_ls emptydisk.img -a /
 
 
 # mkdir + ls
-# echo "\n----------mkdir--------\n"
-# ./ext2_mkdir emptydisk.img /123
-# echo "\n----------ls-----------\n"
-# ./ext2_ls emptydisk.img /
-# echo "\n---------readimage----\n"
-# ./readimage emptydisk.img
-# echo "\n---------test---------\n"
-# ./test emptydisk.img /
-# echo "\n---------test---------\n"
-# ./test emptydisk.img /123
-# echo "\n---------test---------\n"
-# ./test emptydisk.img /lost+found
+echo "\n----------mkdir--------\n"
+./ext2_mkdir emptydisk.img /123
+echo "\n----------ls-----------\n"
+./ext2_ls emptydisk.img /
+echo "\n---------readimage----\n"
+./readimage emptydisk.img
+echo "\n---------test---------\n"
+./test emptydisk.img /
+echo "\n---------test---------\n"
+./test emptydisk.img /123
+echo "\n---------test---------\n"
+./test emptydisk.img /lost+found
 
 # rm

@@ -98,7 +98,7 @@ printf("file size: %d\n", fileSize);
     if (singleIndirect == NULL)
         childInode->i_blocks = ((fileSize+1023)/1024)*2;
     else
-        childInode->i_blocks = ((fileSize+1023)/1024)*2+1;
+        childInode->i_blocks = ((fileSize+1023)/1024+1)*2;
 printf("\n--childInode: --\n");
 printInode(childInode);
     // add dir_entry fot this file into parent dir
