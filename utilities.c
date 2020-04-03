@@ -361,7 +361,7 @@ void getParentDirPath(char *path) {
     * modify input path
     */
     assert (strcmp(path, "/")!=0);
-    
+
     int len = strlen(path);
     if (path[len-1]=='/')
         path[len-1] = '\0';
@@ -432,7 +432,7 @@ void rm(struct ext2_inode *parentInode, char *childFileName) {
         // reduce link count for self and parent (. and ..)
         childInode->i_links_count--;
         parentInode->i_links_count--;
-
+        printf("1\n");
         // for each file name (other than . and ..) in child dir, call recursion
         for (int i=0; i<12; i++) {
             if (childInode->i_block[i] == 0)
@@ -442,7 +442,7 @@ void rm(struct ext2_inode *parentInode, char *childFileName) {
             total_rec_len = 0;
             // for each dir entry in the block
             while (total_rec_len < EXT2_BLOCK_SIZE) {
-                if (strcmp(cur_dir_entry->name, "")!=0 &&
+                if (cur_dir_entry->name_len == 0 &&
                     strcmp(cur_dir_entry->name, ".")!=0 &&
                     strcmp(cur_dir_entry->name, "..")!=0)
                     rm(childInode, cur_dir_entry->name);
@@ -451,7 +451,7 @@ void rm(struct ext2_inode *parentInode, char *childFileName) {
                 cur_dir_entry = (void *) cur_dir_entry + cur_dir_entry->rec_len;
             }
         }
-
+        printf("2\n");
         // if child link count == 0 remove inode
         if (childInode->i_links_count == 0) {
             deleteInode(cur_dir_entry->inode);
