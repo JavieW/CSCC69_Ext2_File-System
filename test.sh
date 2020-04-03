@@ -75,18 +75,18 @@
 
 
 # mkdir + ls
-echo "\n----------mkdir--------\n"
-./ext2_mkdir emptydisk.img /123
-echo "\n----------ls-----------\n"
-./ext2_ls emptydisk.img /
-echo "\n---------readimage----\n"
-./readimage emptydisk.img
-echo "\n---------test---------\n"
-./test emptydisk.img /
-echo "\n---------test---------\n"
-./test emptydisk.img /123
-echo "\n---------test---------\n"
-./test emptydisk.img /lost+found
+# echo "\n----------mkdir--------\n"
+# ./ext2_mkdir emptydisk.img /123
+# echo "\n----------ls-----------\n"
+# ./ext2_ls emptydisk.img /
+# echo "\n---------readimage----\n"
+# ./readimage emptydisk.img
+# echo "\n---------test---------\n"
+# ./test emptydisk.img /
+# echo "\n---------test---------\n"
+# ./test emptydisk.img /123
+# echo "\n---------test---------\n"
+# ./test emptydisk.img /lost+found
 
 #mkdir
 echo "-----test mkdir at root, this should fail: <<<./ext2_mkdir emptydisk.img />>>-----"

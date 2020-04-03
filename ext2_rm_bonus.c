@@ -52,6 +52,9 @@ int main(int argc, char **argv) {
     if (parentDirPath[0]!='/') {
         fprintf(stderr, "No such file or directory\n");
         return ENOENT;
+    } else if (parentDirPath[1]=='\0'){
+        fprintf(stderr, "Cannot remove root directory\n");
+        return ENOENT;
     } else {
         getParentDirPath(parentDirPath);
     }

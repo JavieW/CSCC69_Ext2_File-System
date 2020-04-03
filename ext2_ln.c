@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
         return ENOENT;
     }
     targetInode = &inodeTable[inodeNum-1];
-    if (targetInode->i_mode == EXT2_S_IFDIR){
+    if (targetInode->i_mode & EXT2_S_IFDIR){
         fprintf(stderr, "No link to a directory\n");
         return EISDIR;
     }
@@ -84,6 +84,9 @@ int main(int argc, char **argv) {
         perror("Invalid parentDirPath");
         fprintf(stderr, "No such file or directory\n");
         return ENOENT;
+    } else if (parentOfPathFrom[1]=='\0'){
+        fprintf(stderr, "No link from a directory\n");
+        return EISDIR;
     } else {
         getParentDirPath(parentOfPathFrom);
     }

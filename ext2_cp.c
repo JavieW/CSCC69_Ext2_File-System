@@ -45,6 +45,9 @@ int main(int argc, char **argv) {
     if (parentDirPath[0]!='/') {
         fprintf(stderr, "Must be absolute path\n");
         return ENOENT;
+    } else if (parentDirPath[1]=='\0'){
+        fprintf(stderr, "Destination cannot be root directory\n");
+        return EEXIST;
     } else {
         getParentDirPath(parentDirPath);
     }

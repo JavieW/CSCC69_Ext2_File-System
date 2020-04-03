@@ -35,9 +35,15 @@ int main(int argc, char **argv) {
 
     // get the parent directory inode
     strcpy(parentDirPath, argv[2]);
+    // if it's not a absolute path
     if (parentDirPath[0]!='/') {
         fprintf(stderr, "No such file or directory\n");
         return ENOENT;
+    // if it's a root directory
+    } else if (parentDirPath[1]=='\0'){
+        fprintf(stderr, "Cannot remove root directory\n");
+        return ENOENT;
+    // general case
     } else {
         getParentDirPath(parentDirPath);
     }
