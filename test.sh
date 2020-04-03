@@ -89,32 +89,46 @@
 # ./test emptydisk.img /lost+found
 
 #mkdir
-echo "-----test mkdir at root, this should fail: <<<./ext2_mkdir emptydisk.img />>>-----"
-./ext2_mkdir emptydisk.img /
-echo "-----test mkdir lost+found, this should fail: <<<./ext2_mkdir emptydisk.img /lost+found>>>-----"
-./ext2_mkdir emptydisk.img /lost+found
-echo "-----test mkdir hello at root, this should work: <<<./ext2_mkdir emptydisk.img /hello>>>-----"
-./ext2_mkdir emptydisk.img /hello
-./ext2_ls emptydisk.img /
-echo "-----test mkdir hello at root again, this should fail: <<<./ext2_mkdir emptydisk.img /hello/>>>-----"
-./ext2_mkdir emptydisk.img /hello/
-./ext2_ls emptydisk.img /
-echo "-----test mkdir world at non-existing dir, this should fail: <<<./ext2_mkdir emptydisk.img /hi/world>>>-----"
-./ext2_mkdir emptydisk.img /hi/world
-echo "-----test mkdir world at hello dir, this should work: <<<./ext2_mkdir emptydisk.img /hello/world>>>-----"
-./ext2_mkdir emptydisk.img /hello/world
-./ext2_ls emptydisk.img /hello
-echo "-----test mkdir good at hello dir, this should work: <<<./ext2_mkdir emptydisk.img /hello/good>>>-----"
-./ext2_mkdir emptydisk.img /hello/good
-./ext2_ls emptydisk.img /hello
-echo "-----test mkdir world at file afile, this should fail: <<<./ext2_mkdir twolevel.img /afile/world>>>-----"
-./ext2_mkdir twolevel.img /afile/world
-echo "-----test mkdir . and .. at hello dir, this should fail: <<<./ext2_mkdir emptydisk.img /hello/.(..)>>>-----"
-./ext2_mkdir emptydisk.img /hello/.
-./ext2_mkdir emptydisk.img /hello/..
-echo "-----test mkdir with no input img file, this should fail: <<<./ext2_mkdir /hello/>>>-----"
-./ext2_mkdir /hello/
-echo "-----test mkdir with no wrong img file, this should fail: <<<./ext2_mkdir haha.img /hello/>>>-----"
-./ext2_mkdir haha.img /hello/
+# echo "-----test mkdir at root, this should fail: <<<./ext2_mkdir emptydisk.img />>>-----"
+# ./ext2_mkdir emptydisk.img /
+# echo "-----test mkdir lost+found, this should fail: <<<./ext2_mkdir emptydisk.img /lost+found>>>-----"
+# ./ext2_mkdir emptydisk.img /lost+found
+# echo "-----test mkdir hello at root, this should work: <<<./ext2_mkdir emptydisk.img /hello>>>-----"
+# ./ext2_mkdir emptydisk.img /hello
+# ./ext2_ls emptydisk.img /
+# echo "-----test mkdir hello at root again, this should fail: <<<./ext2_mkdir emptydisk.img /hello/>>>-----"
+# ./ext2_mkdir emptydisk.img /hello/
+# ./ext2_ls emptydisk.img /
+# echo "-----test mkdir world at non-existing dir, this should fail: <<<./ext2_mkdir emptydisk.img /hi/world>>>-----"
+# ./ext2_mkdir emptydisk.img /hi/world
+# echo "-----test mkdir world at hello dir, this should work: <<<./ext2_mkdir emptydisk.img /hello/world>>>-----"
+# ./ext2_mkdir emptydisk.img /hello/world
+# ./ext2_ls emptydisk.img /hello
+# echo "-----test mkdir good at hello dir, this should work: <<<./ext2_mkdir emptydisk.img /hello/good>>>-----"
+# ./ext2_mkdir emptydisk.img /hello/good
+# ./ext2_ls emptydisk.img /hello
+# echo "-----test mkdir world at file afile, this should fail: <<<./ext2_mkdir twolevel.img /afile/world>>>-----"
+# ./ext2_mkdir twolevel.img /afile/world
+# echo "-----test mkdir . and .. at hello dir, this should fail: <<<./ext2_mkdir emptydisk.img /hello/.(..)>>>-----"
+# ./ext2_mkdir emptydisk.img /hello/.
+# ./ext2_mkdir emptydisk.img /hello/..
+# echo "-----test mkdir with no input img file, this should fail: <<<./ext2_mkdir /hello/>>>-----"
+# ./ext2_mkdir /hello/
+# echo "-----test mkdir with no wrong img file, this should fail: <<<./ext2_mkdir haha.img /hello/>>>-----"
+# ./ext2_mkdir haha.img /hello/
 
 # rm
+./ext2_mkdir emptydisk.img /dir1
+./ext2_mkdir emptydisk.img /dir1/dir2
+./ext2_mkdir emptydisk.img /dir1/dir2/dir3
+./ext2_cp emptydisk.img file1.txt /file1
+./ext2_cp emptydisk.img file2.txt /dir1/file2
+./ext2_cp emptydisk.img file3.txt /dir1/dir2/file3
+./ext2_ln emptydisk.img -s /dir1/file2 /slink1
+./ext2_ln emptydisk.img /dir1/file2 /hlink1
+./ext2_ln emptydisk.img -s /dir1/dir2/file3 /dir1/slink2
+./ext2_ln emptydisk.img /dir1/dir2/file3 /dir1/hlink2
+./ext2_ln emptydisk.img -s /file1 /dir1/dir2/slink3
+./ext2_ln emptydisk.img /file1 /dir1/dir2/hlink3
+
+
