@@ -203,6 +203,8 @@ int searchFileInDir(struct ext2_inode *parentInode, char *childFileName) {
     if (pre_dir_entry != NULL) {
         cur_dir_entry = (void *)pre_dir_entry + pre_dir_entry->rec_len;
         return cur_dir_entry->inode;
+    } else if (strcmp(childFileName, ".") == 0) {
+        return ((struct ext2_dir_entry_2 *)getBlock(parentInode->i_block[0]))->inode;
     }
     return 0;
 }
