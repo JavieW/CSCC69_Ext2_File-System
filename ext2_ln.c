@@ -124,7 +124,7 @@ int main(int argc, char **argv) {
 
         initNewDirent(parentInode, childInodeNum, EXT2_FT_SYMLINK, linkName);
 
-        if (childInode->i_size < 60){
+        if (childInode->i_size <= 60){
             strcpy((char *)childInode->i_block, pathTo);
         }else{    
             // append path to the inode block
