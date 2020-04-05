@@ -75,13 +75,11 @@ int main(int argc, char **argv) {
     int i = 0;
     while (!feof(src_fd)) {
         nextBlockNum = allocateNewBlock();
-printf("Block %d is allocated for: %s\n", nextBlockNum, fileName);
         if (i<12) {
             childInode->i_block[i] = nextBlockNum;
         } else if (i==12) {
             childInode->i_block[i] = nextBlockNum;
             singleIndirect = initSingleIndirect(nextBlockNum);
-printf("\nabove block is for singleindirect.\n"); 
             i++;
             continue;
         } else {
@@ -89,23 +87,16 @@ printf("\nabove block is for singleindirect.\n");
         }
 
         byteRead = fread(getBlock(nextBlockNum), 1, 1024, src_fd);
-//printf("%s\n", getBlock(nextBlockNum));
-//printf("total %d bytes in this block\n", byteRead);
         fileSize += byteRead;
         i++;
     }
     fclose(src_fd);
-    // uptate inode filed
-//printf("file size: %d\n", fileSize);
+    // update inode fields
     childInode->i_size = fileSize;
     if (singleIndirect == NULL)
         childInode->i_blocks = ((fileSize+1023)/1024)*2;
     else
         childInode->i_blocks = ((fileSize+1023)/1024+1)*2;
-//printf("\n--childInode: --\n");
-//printInode(childInode);
     // add dir_entry fot this file into parent dir
     initNewDirent(parentInode, childInodeNum, EXT2_FT_REG_FILE, fileName);
-//printf("\n--parentInode: --\n");
-//printInode(parentInode);
 }

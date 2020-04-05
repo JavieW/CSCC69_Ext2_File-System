@@ -62,7 +62,6 @@ void changeBitmap(char unsigned *bitmap, int idx, char mode) {
     turn_on = turn_on << idx%8;
     turn_off = ~(turn_off << idx%8);
 
-    
     if (mode == 'a'){
         // turning on the bit
         bitmap[idx/8] = bitmap[idx/8] | turn_on;
@@ -127,7 +126,6 @@ void deleteInode(int inodeNum) {
     int i;
     for(i = 0; i<12;i++) {
         if (target->i_block[i] != 0) {
-printf("\n--inodeNum: %d, type: f/d, block_number: %d--\n\n", inodeNum, target->i_block[i]);
             changeBitmap(block_bitmap, target->i_block[i]-1, 'd');
             getGroupDesc()->bg_free_blocks_count++;
         }
@@ -141,40 +139,15 @@ printf("\n--inodeNum: %d, type: f/d, block_number: %d--\n\n", inodeNum, target->
         unsigned int *single = (unsigned int*)getBlock(bp);
         for (int i=0; i<EXT2_BLOCK_SIZE/4; i++) {
             if (single[i] != 0) {
-printf("\n--inodeNum: %d, type: f/d, block_number: %d--\n\n", inodeNum, single[i]);
                 changeBitmap(block_bitmap, single[i]-1, 'd');
                 getGroupDesc()->bg_free_blocks_count++;
             }
-        }
-printf("\n--inodeNum: %d, type: f/d, block_number: %d--\n\n", inodeNum, target->i_block[12]);    
+        }   
         // delte single itself
         changeBitmap(block_bitmap, target->i_block[12]-1, 'd');
         getGroupDesc()->bg_free_blocks_count++;
     }
 }
-
-void printInode(struct ext2_inode *inode)
-{
-    printf("i_ctime: %d\n", inode->i_ctime);
-    printf("i_dtime: %d\n", inode->i_dtime);
-    printf("i_mode: %d\n", inode->i_mode);
-    printf("i_size: %d\n", inode->i_size);
-    printf("i_links_count: %d\n", inode->i_links_count);
-    printf("i_blocks: %d\n", inode->i_blocks);
-    printf("i_block:\n\t");
-    for(int i=0; i<15; i++) {
-        printf("[%d]: %d ", i, inode->i_block[i]);
-    }
-    if(inode->i_block[12] != 0) {
-        printf("\nfirst 15 single indirect:\n\t");
-        unsigned int *singleIndirect = (unsigned int *)getBlock(inode->i_block[12]);
-        for(int i=0; i<15; i++) {
-            printf("[%d]: %d ", i, singleIndirect[i]);
-        }
-    }
-    printf("\n\n");
-}
-
 
 // block
 char unsigned *getBlock(int blockNum) {
@@ -200,12 +173,13 @@ int searchFileInDir(struct ext2_inode *parentInode, char *childFileName) {
      */
     struct ext2_dir_entry_2 *cur_dir_entry = NULL;
     struct ext2_dir_entry_2 *pre_dir_entry = getPreDirent(parentInode, childFileName);
-    if (pre_dir_entry != NULL) {
-        cur_dir_entry = (void *)pre_dir_entry + pre_dir_entry->rec_len;
-        return cur_dir_entry->inode;
-    } else if (strcmp(childFileName, ".") == 0) {
+    if (strcmp(childFileName, ".") == 0) {
         return ((struct ext2_dir_entry_2 *)getBlock(parentInode->i_block[0]))->inode;
     }
+    else if (pre_dir_entry != NULL) {
+        cur_dir_entry = (void *)pre_dir_entry + pre_dir_entry->rec_len;
+        return cur_dir_entry->inode;
+    } 
     return 0;
 }
 
@@ -420,14 +394,12 @@ void rm(struct ext2_inode *parentInode, char *childFileName) {
         }
         changeBitmap(getBitmap(INODE_BITMAP), cur_dir_entry->inode-1, 'd');
         getGroupDesc()->bg_free_inodes_count++;
-printf("inode num: %d, filename: %s, type: l, is deleted\n", cur_dir_entry->inode, cur_dir_entry->name);
     }
     // base case2, if childInode is a file
     else if (cur_dir_entry->file_type == EXT2_FT_REG_FILE)
     {
         // if link count == 0 remove inode
         if (childInode->i_links_count == 1) {
-printf("inode num: %d, filename: %s, type: f , link_count: %d, is deleted\n", cur_dir_entry->inode, cur_dir_entry->name, childInode->i_links_count);
             deleteInode(cur_dir_entry->inode);
         } else {
             childInode->i_links_count--;
@@ -451,7 +423,6 @@ printf("inode num: %d, filename: %s, type: f , link_count: %d, is deleted\n", cu
                 if (child_dir_entry->name_len != 0 &&
                     strcmp(child_dir_entry->name, ".")!=0 &&
                     strcmp(child_dir_entry->name, "..")!=0) {
-printf("\nrun recursion in dir: %s with filename: %s\n\n", cur_dir_entry->name, child_dir_entry->name);
                     rm(childInode, child_dir_entry->name);
                 }
                 total_rec_len = total_rec_len + child_dir_entry->rec_len;
@@ -461,7 +432,6 @@ printf("\nrun recursion in dir: %s with filename: %s\n\n", cur_dir_entry->name, 
         
         // if child link count == 0 remove inode
         if (childInode->i_links_count == 1) {
-printf("inode num: %d, filename: %s, type: d , link_count: %d, is deleted\n", cur_dir_entry->inode, cur_dir_entry->name, childInode->i_links_count);
             deleteInode(cur_dir_entry->inode);
             getGroupDesc()->bg_used_dirs_count--;
         }

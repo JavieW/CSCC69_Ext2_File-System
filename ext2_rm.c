@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
     strcpy(parentDirPath, argv[2]);
     // if it's not a absolute path
     if (parentDirPath[0]!='/') {
-        fprintf(stderr, "No such file or directory\n");
+        fprintf(stderr, "Must be an absolute path\n");
         return ENOENT;
     // if it's a root directory
     } else if (parentDirPath[1]=='\0'){
@@ -56,6 +56,10 @@ int main(int argc, char **argv) {
 
     // check file exist
     getFileNameFromPath(fileName, argv[2]);
+    if (strcmp(fileName, ".") == 0 || strcmp(fileName, "..") == 0){
+        fprintf(stderr, "Cannot remove . or ..\n");
+        return ENOENT;
+    }
     childInodeNum = searchFileInDir(parentInode, fileName);
     if (childInodeNum == 0) {
         fprintf(stderr, "No such file or directory\n");

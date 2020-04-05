@@ -40,8 +40,6 @@ int initInode(unsigned short mode);
 
 void deleteInode(int inodeNum);
 
-void printInode(struct ext2_inode *inode);
-
 // block
 char unsigned *getBlock(int blockNum);
 

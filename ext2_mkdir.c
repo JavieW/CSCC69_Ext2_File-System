@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
     strcpy(path, argv[2]);
     strcpy(pathCopy, argv[2]);
     // if input is root, return EEXIST
-    if (strlen(pathCopy) == 1) {
+    if (strcmp(pathCopy, "/") == 0) {
         fprintf(stderr, "Specified directory already exists\n");
         return EEXIST;
     }

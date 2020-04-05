@@ -25,7 +25,6 @@ int main(int argc, char **argv) {
     int flagged = FALSE;
     int inodeNum, parentInodeNum, childInodeNum;
 
-
     struct ext2_inode *targetInode, *parentInode, *childInode;
 
     if(argc!=4 && argc!=5) {
@@ -125,7 +124,7 @@ int main(int argc, char **argv) {
         initNewDirent(parentInode, childInodeNum, EXT2_FT_SYMLINK, linkName);
 
         if (childInode->i_size <= 60){
-            strcpy((char *)childInode->i_block, pathTo);
+            strncpy((char *)childInode->i_block, pathTo, 60);
         }else{    
             // append path to the inode block
             int block_num = allocateNewBlock();
