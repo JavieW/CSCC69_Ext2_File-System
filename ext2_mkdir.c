@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
     // if any component on the path of parent directory does not exist,
     // return ENOENT
     if (parent_inode_num == 0) {
-        fprintf(stderr, "One of the compoenets on the path does not exist\n");
+        fprintf(stderr, "One of the components on the path does not exist\n");
         return ENOENT;
     }
 
