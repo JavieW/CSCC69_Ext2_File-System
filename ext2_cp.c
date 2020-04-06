@@ -61,8 +61,10 @@ int main(int argc, char **argv) {
     // check file exist
     getFileNameFromPath(fileName, argv[3]);
     childInodeNum = searchFileInDir(parentInode, fileName);
-    if (childInodeNum != 0) {
-        fprintf(stderr, "File or directory already exist\n");
+    if (childInodeNum != 0 && inodeTable[childInodeNum-1].i_mode & EXT2_S_IFREG) {
+        rm(parentInode, fileName);
+    } else if (childInodeNum != 0 && inodeTable[childInodeNum-1].i_mode & EXT2_S_IFDIR) {
+        fprintf(stderr, "Directory already exists\n");
         return EEXIST;
     }
 
